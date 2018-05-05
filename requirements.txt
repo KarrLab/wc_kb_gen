@@ -1,0 +1,2 @@
+setuptools
+git+https://github.com/KarrLab/wc_kb.git#egg=wc_kb-0.0.1
