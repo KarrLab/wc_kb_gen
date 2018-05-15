@@ -1,5 +1,5 @@
 [//]: # ( [![PyPI package](https://img.shields.io/pypi/v/wc_kb_gen.svg)](https://pypi.python.org/pypi/wc_kb_gen) )
-[![Documentation](https://img.shields.io/badge/docs-latest-green.svg)](http://docs.karrlab.org/wc_kb_gen)
+[![Documentation](https://readthedocs.org/projects/wc-kb-gen/badge/?version=latest)](http://docs.karrlab.org/wc_kb_gen)
 [![Test results](https://circleci.com/gh/KarrLab/wc_kb_gen.svg?style=shield)](https://circleci.com/gh/KarrLab/wc_kb_gen)
 [![Test coverage](https://coveralls.io/repos/github/KarrLab/wc_kb_gen/badge.svg)](https://coveralls.io/github/KarrLab/wc_kb_gen)
 [![Code analysis](https://api.codeclimate.com/v1/badges/de755bad1d02fc9d50fa/maintainability)](https://codeclimate.com/github/KarrLab/wc_kb_gen)
