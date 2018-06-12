@@ -6,7 +6,6 @@
 :License: MIT
 """
 
-import abc
 import wc_kb
 
 
@@ -58,7 +57,7 @@ class KbGenerator(object):
         return kb
 
 
-class KbComponentGenerator(object, metaclass=abc.ABCMeta):
+class KbComponentGenerator(object):
     """ Base class for knowledge base component generators
 
     Attributes:
@@ -77,21 +76,23 @@ class KbComponentGenerator(object, metaclass=abc.ABCMeta):
 
     def run(self):
         """ Generate knowledge base components """
+        self.clean_and_validate_options()
         self.get_data()
         self.process_data()
         self.gen_components()
 
-    @abc.abstractmethod
+    def clean_and_validate_options(self):
+        """ Apply default options and validate options """
+        pass  # pragma: no cover
+
     def get_data(self):
         """ Get data for knowledge base components """
         pass  # pragma: no cover
 
-    @abc.abstractmethod
     def process_data(self):
         """ Process data for knowledge base components """
         pass  # pragma: no cover
 
-    @abc.abstractmethod
     def gen_components(self):
         """ Construct knowledge base components """
         pass  # pragma: no cover
