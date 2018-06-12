@@ -48,7 +48,7 @@ class KbGenerator(object):
         kb.id = self.options.get('id', None)
         kb.version = self.options.get('version', None)
 
-        kb.cell = wc_kb.Cell()
+        kb.cell = wc_kb.Cell(id='cell')
 
         component_options = self.options.get('component', {})
         for component_generator in self.component_generators:
