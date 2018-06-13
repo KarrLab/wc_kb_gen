@@ -12,12 +12,18 @@ import wc_kb
 class KbGenerator(object):
     """ Generator for knowledge bases of experimental data for whole-cell models
 
+    Options:
+
+    * id
+    * name
+    * component
+
     Attributes:
         component_generators (:obj:`list` of :obj:`KbComponentGenerator`): component 
             generators of the knowledge base
         options (:obj:`dict`, optional): dictionary of options whose keys are the names
             of component generator classes and whose values are dictionaries of options
-            for the component generator classes
+            for the component generator classes    
     """
 
     DEFAULT_COMPONENT_GENERATORS = ()
@@ -43,6 +49,8 @@ class KbGenerator(object):
             :obj:`wc_kb.KnowledgeBase`: knowledge base
         """
 
+        self.clean_and_validate_options()
+
         kb = wc_kb.KnowledgeBase()
         kb.id = self.options.get('id', None)
         kb.version = self.options.get('version', None)
@@ -55,6 +63,10 @@ class KbGenerator(object):
             component_generator(kb, options=options).run()
 
         return kb
+
+    def clean_and_validate_options(self):
+        """ Apply default options and validate options """
+        pass  # pragma: no cover
 
 
 class KbComponentGenerator(object):
