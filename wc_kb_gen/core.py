@@ -52,8 +52,9 @@ class KbGenerator(object):
         self.clean_and_validate_options()
 
         kb = wc_kb.KnowledgeBase()
-        kb.id = self.options.get('id', None)
-        kb.version = self.options.get('version', None)
+        kb.id = self.options.get('id')
+        kb.name = self.options.get('name')
+        kb.version = self.options.get('version')
 
         kb.cell = wc_kb.Cell(id='cell')
 
@@ -66,7 +67,19 @@ class KbGenerator(object):
 
     def clean_and_validate_options(self):
         """ Apply default options and validate options """
-        pass  # pragma: no cover
+        options = self.options
+
+        id = options.get('id', None)
+        assert(isinstance(id, str) or id is None)
+        options['id'] = id
+
+        name = options.get('name', None)
+        assert(isinstance(name, str) or name is None)
+        options['name'] = name
+
+        version = options.get('version', None)
+        assert(isinstance(version, str) or version is None)
+        options['version'] = version
 
 
 class KbComponentGenerator(object):
