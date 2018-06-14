@@ -97,7 +97,7 @@ class KbComponentGenerator(object):
         """
         self.knowledge_base = knowledge_base
         
-        self.options = options
+        self.options = options or {}
         self.clean_and_validate_options()
 
     def clean_and_validate_options(self):
