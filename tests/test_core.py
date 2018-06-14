@@ -16,7 +16,7 @@ class TestKbGenerator(unittest.TestCase):
         gen = wc_kb_gen.KbGenerator()
 
         self.assertEqual(gen.component_generators, [])
-        self.assertEqual(gen.options, {})
+        self.assertEqual(gen.options, {'id': None, 'name': None, 'version': None})
 
     def test_ModelGenerator_run(self):
         gen = wc_kb_gen.KbGenerator(options={

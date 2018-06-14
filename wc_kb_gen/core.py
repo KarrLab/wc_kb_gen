@@ -40,30 +40,9 @@ class KbGenerator(object):
         if not component_generators:
             component_generators = list(self.DEFAULT_COMPONENT_GENERATORS)
         self.component_generators = component_generators
+
         self.options = options or {}
-
-    def run(self):
-        """ Generate a knowledge base of experimental data for a whole-cell model
-
-        Returns:
-            :obj:`wc_kb.KnowledgeBase`: knowledge base
-        """
-
         self.clean_and_validate_options()
-
-        kb = wc_kb.KnowledgeBase()
-        kb.id = self.options.get('id')
-        kb.name = self.options.get('name')
-        kb.version = self.options.get('version')
-
-        kb.cell = wc_kb.Cell(id='cell')
-
-        component_options = self.options.get('component', {})
-        for component_generator in self.component_generators:
-            options = component_options.get(component_generator.__name__, {})
-            component_generator(kb, options=options).run()
-
-        return kb
 
     def clean_and_validate_options(self):
         """ Apply default options and validate options """
@@ -81,6 +60,26 @@ class KbGenerator(object):
         assert(isinstance(version, str) or version is None)
         options['version'] = version
 
+    def run(self):
+        """ Generate a knowledge base of experimental data for a whole-cell model
+
+        Returns:
+            :obj:`wc_kb.KnowledgeBase`: knowledge base
+        """
+        kb = wc_kb.KnowledgeBase()
+        kb.id = self.options.get('id')
+        kb.name = self.options.get('name')
+        kb.version = self.options.get('version')
+
+        kb.cell = wc_kb.Cell(id='cell')
+
+        component_options = self.options.get('component', {})
+        for component_generator in self.component_generators:
+            options = component_options.get(component_generator.__name__, {})
+            component_generator(kb, options=options).run()
+
+        return kb
+
 
 class KbComponentGenerator(object):
     """ Base class for knowledge base component generators
@@ -97,18 +96,19 @@ class KbComponentGenerator(object):
             options (:obj:`dict`, optional): options
         """
         self.knowledge_base = knowledge_base
+        
         self.options = options
-
-    def run(self):
-        """ Generate knowledge base components """
         self.clean_and_validate_options()
-        self.get_data()
-        self.process_data()
-        self.gen_components()
 
     def clean_and_validate_options(self):
         """ Apply default options and validate options """
         pass  # pragma: no cover
+
+    def run(self):
+        """ Generate knowledge base components """        
+        self.get_data()
+        self.process_data()
+        self.gen_components()
 
     def get_data(self):
         """ Get data for knowledge base components """
