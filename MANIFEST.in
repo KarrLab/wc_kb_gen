@@ -9,3 +9,6 @@ include LICENSE
 
 # requirements
 include requirements.txt
+
+#metabolites file
+include wc_kb_gen/data/metabolites.csv
