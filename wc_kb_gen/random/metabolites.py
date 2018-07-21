@@ -25,8 +25,8 @@ class MetabolitesGenerator(wc_kb_gen.KbComponentGenerator):
         """ Apply default options and validate options """
         options = self.options
         data_path = options.get('data_path', pkg_resources.resource_filename(
-            'rand_wc_model_gen', os.path.join('data', 'metabolites.csv')))
-        print(data_path)
+            'wc_kb_gen', os.path.join('data', 'metabolites.csv')))
+
         assert(os.path.isfile(data_path))
         options['data_path'] = data_path
 
