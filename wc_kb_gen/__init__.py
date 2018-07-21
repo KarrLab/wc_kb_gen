@@ -6,3 +6,4 @@ with open(pkg_resources.resource_filename('wc_kb_gen', 'VERSION'), 'r') as file:
 
 # API
 from .core import KbGenerator, KbComponentGenerator
+from . import random
