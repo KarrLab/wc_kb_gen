@@ -22,13 +22,13 @@ class ObservablesGenerator(wc_kb_gen.KbComponentGenerator):
         """ Apply default options and validate options """
 
         options = self.options
-        assigned_trnas = options.get('assigned_trnas', ['tRNA_Ser', 'tRNA_Leu', 'tRNA_Arg',
-                                                        'tRNA_Thr', 'tRNA_Gly', 'tRNA_Phe',
-                                                        'tRNA_Trp', 'tRNA_Lys', 'tRNA_Ile',
-                                                        'tRNA_Ala', 'tRNA_Met', 'tRNA_Gln',
-                                                        'tRNA_Pro', 'tRNA_Val', 'tRNA_Cys',
-                                                        'tRNA_Tyr', 'tRNA_His', 'tRNA_Asn',
-                                                        'tRNA_Asp', 'tRNA_Glu'])
+        bases = "TCAG"
+        codons = [a + b + c for a in bases for b in bases for c in bases]
+        default_trnas = []
+        for codon in codons:
+            default_trnas.append('tRNA_'+codon)
+
+        assigned_trnas = options.get('assigned_trnas', default_trnas)
 
         rnas = self.knowledge_base.cell.species_types.get(
             __type=wc_kb.RnaSpeciesType)
@@ -76,11 +76,8 @@ class ObservablesGenerator(wc_kb_gen.KbComponentGenerator):
 
         for rna in sampled_trnas:
             rna_name = next(assigned_trnas)
-            rna.id = rna_name
-            rna.name = rna_name
             observable = cell.observables.get_or_create(id=rna_name+'_obs')
             observable.name = rna_name
-            #print(observable.name)
             observable.species.append(
                 wc_kb.SpeciesCoefficient(species=wc_kb.Species(species_type=rna, compartment=cytosol), coefficient=1))
 
@@ -90,8 +87,6 @@ class ObservablesGenerator(wc_kb_gen.KbComponentGenerator):
         assigned_proteins = iter(assigned_proteins)
         for protein in sampled_proteins:
             protein_name = next(assigned_proteins)
-            protein.id = protein_name
-            protein.name = protein_name
             observable = cell.observables.get_or_create(id=protein_name+'_obs')
             observable.name = protein_name
             observable.species.append(
