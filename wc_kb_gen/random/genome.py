@@ -240,7 +240,7 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         mean_copy_number = options.get('mean_copy_number')
         mean_half_life = options.get('mean_half_life')
         mean_volume = self.knowledge_base.cell.properties.get_one(
-            id='mean_volume').value
+            id='initial_volume').value
         for chromosome in self.knowledge_base.cell.species_types.get(__type=wc_kb.core.DnaSpeciesType):
             for i in range(len(chromosome.loci)):
 
