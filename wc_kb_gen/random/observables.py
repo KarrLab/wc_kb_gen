@@ -52,6 +52,11 @@ class ObservablesGenerator(wc_kb_gen.KbComponentGenerator):
         assert(len(assigned_proteins) <= len(prots))
         options['assigned_proteins'] = assigned_proteins
 
+        assigned_complexes = options.get('assigned_complexes', ['complex_70S_IA', 'complex_70S_A'])
+
+        options['assigned_complexes'] = assigned_complexes
+                
+
     def gen_components(self):
         """ Takes random samples of the generated rnas and proteins and assigns them functions based on the included list of proteins and rnas"""
         cell = self.knowledge_base.cell
@@ -59,6 +64,7 @@ class ObservablesGenerator(wc_kb_gen.KbComponentGenerator):
 
         assigned_trnas = self.options['assigned_trnas']
         assigned_proteins = self.options['assigned_proteins']
+        assigned_complexes = self.options['assigned_complexes']
 
         prots = self.knowledge_base.cell.species_types.get(
             __type=wc_kb.ProteinSpeciesType)
@@ -92,6 +98,17 @@ class ObservablesGenerator(wc_kb_gen.KbComponentGenerator):
             observable.name = protein_name
             observable.species.append(
                 wc_kb.SpeciesCoefficient(species=wc_kb.Species(species_type=protein, compartment=cytosol), coefficient=1))
+
+        for comp in assigned_complexes:
+            comp_species = cell.species_types.get_or_create(id = comp, __type=wc_kb.ComplexSpeciesType)
+            comp_species.concentration = 1e-2
+            comp_species.formation_process = wc_kb.ComplexFormationType.process_RibosomeAssembly
+            observable = cell.observables.get_or_create(id=comp+'_obs')
+            observable.name = comp
+            observable.species.append(
+                wc_kb.SpeciesCoefficient(species=wc_kb.Species(species_type=comp_species, compartment=cytosol), coefficient=1))
+        
+
 
 class ObservablesGenerator2(wc_kb_gen.KbComponentGenerator):
     """
@@ -129,6 +146,10 @@ class ObservablesGenerator2(wc_kb_gen.KbComponentGenerator):
         assert(len(assigned_proteins) <= len(prots))
         options['assigned_proteins'] = assigned_proteins
 
+        assigned_complexes = options.get('assigned_complexes', ['complex_70S_IA', 'complex_70S_A'])
+
+        options['assigned_complexes'] = assigned_complexes
+
     def gen_components(self):
         """ Takes random samples of the generated rnas and proteins and assigns them functions based on the included list of proteins and rnas"""
         cell = self.knowledge_base.cell
@@ -136,6 +157,7 @@ class ObservablesGenerator2(wc_kb_gen.KbComponentGenerator):
 
         assigned_trnas = self.options['assigned_trnas']
         assigned_proteins = self.options['assigned_proteins']
+        assigned_complexes = self.options['assigned_complexes']
 
         prots = self.knowledge_base.cell.species_types.get(
             __type=wc_kb.ProteinSpeciesType)
@@ -218,3 +240,12 @@ class ObservablesGenerator2(wc_kb_gen.KbComponentGenerator):
                 observable.name = 'deg_rnase'
                 observable.species.append(
                     wc_kb.SpeciesCoefficient(species=wc_kb.Species(species_type=protein, compartment=cytosol), coefficient=1))
+
+        for comp in assigned_complexes:
+            comp_species = cell.species_types.get_or_create(id = comp, __type=wc_kb.ComplexSpeciesType)
+            comp_species.concentration = 1e-2
+            comp_species.formation_process = wc_kb.ComplexFormationType.process_RibosomeAssembly
+            observable = cell.observables.get_or_create(id=comp+'_obs')
+            observable.name = comp
+            observable.species.append(
+                wc_kb.SpeciesCoefficient(species=wc_kb.Species(species_type=comp_species, compartment=cytosol), coefficient=1))
