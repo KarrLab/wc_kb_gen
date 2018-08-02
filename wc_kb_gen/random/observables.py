@@ -1,5 +1,6 @@
 """
 :Author: Bilal Shaikh <bilal.shaikh@columbia.edu>
+         Ashwin Srinivasan <ashwins@mit.edu>
 ::Date: 2018-07-19
 :Copyright: 2018, Karr Lab
 :License: MIT
@@ -11,11 +12,12 @@ import numpy
 
 class ObservablesGenerator(wc_kb_gen.KbComponentGenerator):
     """
-    Creates observable objects for proteins and tRNAs that are assigned to specific functions. Adds these observables to the knowledge base.
+    Creates observable objects for proteins and tRNAs and complexes that are assigned to specific functions. Adds these observables to the knowledge base.
 
     Options:
         * assigned_trnas (:obj:'list'): A list of the names of trnas to be created
         * assigned_proteins (:obj: 'list'): A list of the names of proteins to be created
+        * assigned_complexes (:obj:'list'): A list of the names of complexes to be created
     """
 
     def clean_and_validate_options(self):
@@ -98,14 +100,12 @@ class ObservablesGenerator(wc_kb_gen.KbComponentGenerator):
             observable.name = protein_name
             observable.species.append(
                 wc_kb.SpeciesCoefficient(species=wc_kb.Species(species_type=protein, compartment=cytosol), coefficient=1))
-
+        
         for comp in assigned_complexes:
             comp_species = cell.species_types.get_or_create(id = comp, __type=wc_kb.ComplexSpeciesType)
-            comp_species.concentration = 1e-2
-            comp_species.formation_process = wc_kb.ComplexFormationType.process_RibosomeAssembly
             observable = cell.observables.get_or_create(id=comp+'_obs')
             observable.name = comp
             observable.species.append(
                 wc_kb.SpeciesCoefficient(species=wc_kb.Species(species_type=comp_species, compartment=cytosol), coefficient=1))
-        
+
 

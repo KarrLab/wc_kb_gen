@@ -4,3 +4,4 @@ from .metabolites import MetabolitesGenerator
 from .properties import PropertiesGenerator
 from .observables import ObservablesGenerator
 from .compartments import CompartmentsGenerator
+from .complex import ComplexGenerator

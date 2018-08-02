@@ -11,6 +11,7 @@ from .metabolites import MetabolitesGenerator
 from .properties import PropertiesGenerator
 from .compartments import CompartmentsGenerator
 from .observables import ObservablesGenerator
+from .complex import ComplexGenerator
 from numpy import random
 import wc_kb_gen
 
@@ -36,6 +37,7 @@ class RandomKbGenerator(wc_kb_gen.KbGenerator):
         CompartmentsGenerator,
         GenomeGenerator,
         MetabolitesGenerator,
+        ComplexGenerator,
         ObservablesGenerator,
     )
 
