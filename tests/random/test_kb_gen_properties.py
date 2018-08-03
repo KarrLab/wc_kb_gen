@@ -21,4 +21,4 @@ class PropertiesGeneratorTestCase(unittest.TestCase):
         gen.run()
 
         self.assertEqual(cell.properties.get_one(
-            id='mean_doubling_time').value, 3600)
+            id='doubling_time').value, 3600)
