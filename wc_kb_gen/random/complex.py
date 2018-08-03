@@ -1,5 +1,6 @@
 """
 :Author: Ashwin Srinivasan <ashwins@mit.edu>
+:Author Bilal Shaikh <bilal.shaikh@columbia.edu>
 ::Date: 2018-08-02
 :Copyright: 2018, Karr Lab
 :License: MIT
@@ -7,6 +8,7 @@
 
 import wc_kb
 import wc_kb_gen
+
 
 class ComplexGenerator(wc_kb_gen.KbComponentGenerator):
     """
@@ -16,11 +18,11 @@ class ComplexGenerator(wc_kb_gen.KbComponentGenerator):
         * assigned_complexes (:obj:'list'): A list of the names of complexes to be created
     """
 
-
     def clean_and_validate_options(self):
         """ Apply default options and validate options """
         options = self.options
-        assigned_complexes = options.get('assigned_complexes', ['complex_70S_IA', 'complex_70S_A'])
+        assigned_complexes = options.get(
+            'assigned_complexes', ['complex_70S_IA', 'complex_70S_A'])
 
         options['assigned_complexes'] = assigned_complexes
 
@@ -29,6 +31,7 @@ class ComplexGenerator(wc_kb_gen.KbComponentGenerator):
         cell = self.knowledge_base.cell
         assigned_complexes = self.options['assigned_complexes']
         for comp in assigned_complexes:
-            comp_species = cell.species_types.get_or_create(id = comp, __type=wc_kb.ComplexSpeciesType)
+            comp_species = cell.species_types.get_or_create(
+                id=comp, __type=wc_kb.ComplexSpeciesType)
             comp_species.concentration = 1e-2
-            #comp_species.formation_process = wc_kb.ComplexFormationType.process_RibosomeAssembly
+            comp_species.formation_process = 7  # process_RibosomeAssembly
