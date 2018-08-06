@@ -22,7 +22,7 @@ class ComplexGenerator(wc_kb_gen.KbComponentGenerator):
         """ Apply default options and validate options """
         options = self.options
         assigned_complexes = options.get(
-            'assigned_complexes', ['subunit_30S', 'subunit_50S','complex_70S_IA', 'complex_70S_A'])
+            'assigned_complexes', ['subunit_30S', 'subunit_50S','complex_70S'])
 
         options['assigned_complexes'] = assigned_complexes
 
@@ -34,10 +34,14 @@ class ComplexGenerator(wc_kb_gen.KbComponentGenerator):
         for comp in assigned_complexes:
             comp_species = cell.species_types.get_or_create(
                 id=comp, __type=wc_kb.ComplexSpeciesType)
+            
             comp_species.concentration = 1e-2
+            species = comp_species.species.get_or_create(compartment=cytosol)
             if comp.startswith('subunit'):
                 comp_species.formation_process = 7  # process_RibosomeAssembly
             elif '70S' in comp:
                 comp_species.formation_process = 9  # process_translation
-                comp_species.subunits.append(wc_kb.SpeciesCoefficient(species = cell.species_types.get_one(id = 'subunit_30S').species.get_one(compartment = cytosol), coefficient = -1))
-                comp_species.subunits.append(wc_kb.SpeciesCoefficient(species = cell.species_types.get_one(id = 'subunit_50S').species.get_one(compartment = cytosol), coefficient = -1))
+                '''species_30S = cell.species_types.get_one(id = 'subunit_30S').species.get_one(compartment = cytosol)
+                species_50S = cell.species_types.get_one(id = 'subunit_50S').species.get_one(compartment = cytosol)
+                comp_species.subunits.append(species_30S.species_coefficients.get_or_create(coefficient = 1))
+                comp_species.subunits.append(species_50S.species_coefficients.get_or_create(coefficient = 1))'''

@@ -76,11 +76,11 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         assert(rRNA_prop >= 0 and rRNA_prop <= 1)
         options['rRNA_prop'] = rRNA_prop
 
-        tRNA_prop = options.get('tRNA_prop', 0.5)
-        assert(tRNA_prop >= 0 and tRNA_prop <= 1)
-        options['tRNA_prop'] = tRNA_prop
+        num_tRNA = options.get('num_tRNA', 20)
+        assert(num_tRNA >= 20)
+        options['num_tRNA'] = num_tRNA
 
-        assert((ncRNA_prop + rRNA_prop + tRNA_prop) <= 1)
+        assert((ncRNA_prop + rRNA_prop + num_tRNA/mean_num_genes) <= 1)
 
         # DOI: 10.1093/molbev/msk019
         mean_gene_len = options.get(
@@ -142,7 +142,8 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         chromosome_topology = options.get('chromosome_topology')
         ncRNA_prop = options.get('ncRNA_prop')
         rRNA_prop = options.get('rRNA_prop')
-        tRNA_prop = options.get('tRNA_prop')
+        num_tRNA = options.get('num_tRNA')
+
 
         # print(tRNA_prop)
 
@@ -164,11 +165,13 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         # The probability of each base being selected randomly
         PROB_BASES = [(1 - mean_gc_frac) / 2, mean_gc_frac /
                       2, mean_gc_frac/2, (1-mean_gc_frac)/2]
-
+        
+        num_genes_all = self.rand(mean_num_genes, min = num_tRNA)[0]
+        
         # Create a chromosome n times
         for i_chr in range(num_chromosomes):
             # number of genes in the chromosome
-            num_genes = self.rand(mean_num_genes / num_chromosomes)[0]
+            num_genes = math.ceil(num_genes_all / num_chromosomes)
             # list of gene lengths (generated randomly) on chromosome
             gene_lens = 3 * self.rand(mean_gene_len, count=num_genes, min=2)
 
@@ -201,6 +204,7 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
             gene_starts = numpy.int64(numpy.cumsum(numpy.concatenate(([0], gene_lens[0:-1])) +
                                                    numpy.concatenate((numpy.round(intergene_lens[0:1] / 2), intergene_lens[1:]))))
 
+            count = 0 #temporary way of incorporating num_tRNA
             # creates GeneLocus objects for the genes and labels their GeneType (which type of RNA they transcribe)
             for i_gene, gene_start in enumerate(gene_starts):
                 gene = self.knowledge_base.cell.loci.get_or_create(
@@ -210,27 +214,33 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
                 gene.end = gene.start + gene_lens[i_gene] - 1  # 1-indexed
                 # print(gene_lens[i_gene] % 3 == 0)
                 gene.name = 'gene {} {}'.format(i_chr+1, i_gene+1)
-                typeList = [wc_kb.GeneType.mRna, wc_kb.GeneType.rRna,
-                            wc_kb.GeneType.sRna, wc_kb.GeneType.tRna]
-                prob_rna = [1 - ncRNA_prop - tRNA_prop -
-                            rRNA_prop, rRNA_prop, ncRNA_prop, tRNA_prop]
-                gene.type = random.choice(typeList, p=prob_rna)
-                if gene.type == wc_kb.GeneType.mRna:  # if mRNA, then set up start/stop codons in the gene
-                    start_codon = random.choice(START_CODONS)
-                    stop_codon = random.choice(STOP_CODONS)
-                    seq_str = str(chro.seq)
-                    seq_str = seq_str[:gene.start-1] + start_codon + \
-                        seq_str[gene.start+2: gene.end-3] + \
-                        stop_codon + seq_str[gene.end:]
-                    for i in range(gene.start+2, gene.end-3, 3):
-                        # print(seq_str[i:i+3])
-                        while seq_str[i:i+3] in START_CODONS or seq_str[i:i+3] in STOP_CODONS:
-                            # print('here')
-                            codon_i = "".join(random.choice(
-                                BASES, p=PROB_BASES, size=(3,)))
-                            seq_str = seq_str[:i]+codon_i+seq_str[i+3:]
 
-                    chro.seq = Seq(seq_str, Alphabet.DNAAlphabet())
+                if count < num_tRNA:
+                    gene.type = wc_kb.GeneType.tRna
+                    count += 1
+                else:
+                    tRNA_prop = num_tRNA / num_genes_all
+                    typeList = [wc_kb.GeneType.mRna, wc_kb.GeneType.rRna,
+                                wc_kb.GeneType.sRna]
+                    mRNA_prop = 1 - rRNA_prop/(1 - tRNA_prop) - ncRNA_prop/(1 - tRNA_prop)
+                    prob_rna = [mRNA_prop, rRNA_prop/(1 - tRNA_prop), ncRNA_prop/(1 - tRNA_prop)]
+                    gene.type = random.choice(typeList, p=prob_rna)
+                    if gene.type == wc_kb.GeneType.mRna:  # if mRNA, then set up start/stop codons in the gene
+                        start_codon = random.choice(START_CODONS)
+                        stop_codon = random.choice(STOP_CODONS)
+                        seq_str = str(chro.seq)
+                        seq_str = seq_str[:gene.start-1] + start_codon + \
+                            seq_str[gene.start+2: gene.end-3] + \
+                            stop_codon + seq_str[gene.end:]
+                        for i in range(gene.start+2, gene.end-3, 3):
+                            # print(seq_str[i:i+3])
+                            while seq_str[i:i+3] in START_CODONS or seq_str[i:i+3] in STOP_CODONS:
+                                # print('here')
+                                codon_i = "".join(random.choice(
+                                    BASES, p=PROB_BASES, size=(3,)))
+                                seq_str = seq_str[:i]+codon_i+seq_str[i+3:]
+
+                        chro.seq = Seq(seq_str, Alphabet.DNAAlphabet())
 
     def gen_rnas_proteins(self):
         """ Creates RNA and protein objects corresponding to genes on chromosome
