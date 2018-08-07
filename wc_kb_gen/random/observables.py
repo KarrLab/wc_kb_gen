@@ -102,36 +102,10 @@ class ObservablesGenerator(wc_kb_gen.KbComponentGenerator):
         assigned_proteins = iter(assigned_proteins)
         for protein in sampled_proteins:
             protein_name = next(assigned_proteins)
-            if protein_name.startswith('IF'):
-                observable = cell.observables.get_or_create(id='IF_obs')
-                observable.name = 'IF'
-                observable.species.append(
-                    wc_kb.SpeciesCoefficient(species=wc_kb.Species(species_type=protein, compartment=cytosol), coefficient=1))
-            if protein_name.startswith('EF'):
-                observable = cell.observables.get_or_create(id='EF_obs')
-                observable.name = 'EF'
-                observable.species.append(
-                    wc_kb.SpeciesCoefficient(species=wc_kb.Species(species_type=protein, compartment=cytosol), coefficient=1))
-            if protein_name.startswith('RF'):
-                observable = cell.observables.get_or_create(id='RF_obs')
-                observable.name = 'RF'
-                observable.species.append(
-                    wc_kb.SpeciesCoefficient(species=wc_kb.Species(species_type=protein, compartment=cytosol), coefficient=1))
-            if protein_name.startswith('rna_poly'):
-                observable = cell.observables.get_or_create(id='rna_poly_obs')
-                observable.name = 'rna_poly'
-                observable.species.append(
-                    wc_kb.SpeciesCoefficient(species=wc_kb.Species(species_type=protein, compartment=cytosol), coefficient=1))
-            if protein_name.startswith('deg_protease'):
-                observable = cell.observables.get_or_create(id='deg_protease_obs')
-                observable.name = 'deg_protease'
-                observable.species.append(
-                    wc_kb.SpeciesCoefficient(species=wc_kb.Species(species_type=protein, compartment=cytosol), coefficient=1))
-            if protein_name.startswith('deg_rnase'):
-                observable = cell.observables.get_or_create(id='deg_rnase_obs')
-                observable.name = 'deg_rnase'
-                observable.species.append(
-                    wc_kb.SpeciesCoefficient(species=wc_kb.Species(species_type=protein, compartment=cytosol), coefficient=1))
+            observable = cell.observables.get_or_create(id=protein_name+'_obs')
+            observable.name = protein_name
+            observable.species.append(
+                wc_kb.SpeciesCoefficient(species=wc_kb.Species(species_type=protein, compartment=cytosol), coefficient=1))
                 
         for comp in assigned_complexes:
             comp_species = cell.species_types.get_or_create(id = comp, __type=wc_kb.ComplexSpeciesType)

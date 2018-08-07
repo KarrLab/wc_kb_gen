@@ -60,22 +60,13 @@ class TestGenomeGenerator(unittest.TestCase):
             elif rna.type == wc_kb.RnaType.sRna:
                 sRna += 1
 
-        total = len(rnas)
+        real_rRna = self.options.get('num_rRNA')
+        real_tRna = self.options.get('num_tRNA')
+        real_sRna = self.options.get('num_ncRNA')
 
-        rRna_prop = rRna / total
-        tRna_prop = tRna / total
-        sRna_prop = sRna / total
-
-        real_rRna = self.options.get('rRNA_prop')
-        real_tRna = self.options.get('tRNA_prop')
-        real_sRna = self.options.get('ncRNA_prop')
-
-        self.assertAlmostEqual(
-            rRna_prop, real_rRna, delta=3 * math.sqrt(real_rRna))
-        self.assertAlmostEqual(
-            tRna_prop, real_tRna, delta=3 * math.sqrt(real_tRna))
-        self.assertAlmostEqual(
-            sRna_prop, real_sRna, delta=3 * math.sqrt(real_sRna))
+        self.assertEqual(rRna, real_rRna)
+        self.assertEqual(tRna, real_tRna)
+        self.assertEqual(sRna, real_sRna)
 
     # test total number of RNAs (should match number of transcription units)
     # test total number of proteins (should match number of GeneLocus objects with mRNA)
