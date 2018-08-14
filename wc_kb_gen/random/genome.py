@@ -23,6 +23,7 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
 
     Options:
 
+    * variation_function (:obj: 'function'): a function used to calculate the standard deviation of the normal function which produces variability in the parameters
     * num_chromosomes (:obj:`int`): number of chromosomes
     * mean_gc_frac (:obj:`float`): fraction of nucleotides which are G or C
     * mean_num_genes (:obj:`float`): mean number of genes
@@ -47,6 +48,10 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         # Nucleic Acids Research 41:D605-12 2013
 
         options = self.options
+
+        variation_function = options.get(
+            'variation_function', lambda x: numpy.sqrt(x))
+        options['variation_function'] = variation_function
 
         num_chromosomes = options.get('num_chromosomes', 1)
         assert(num_chromosomes >= 1 and int(
@@ -410,17 +415,25 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
             for locus in transcription_loci:
                 locus.polymer = chromosome
 
-    def rand(self, mean, count=1, min=0, max=numpy.inf):
-        """ Generated 1 or more random normally distributed integer(s) with standard deviation equal
-        to the square root of the mean value.
+    def rand(self, mean, count=1, min=0, max=numpy.inf, varfunc=None, round=False):
+        """ Generated 1 or more random normally distributed values with standard deviation calculated by the provided variation function. If round flag is set, the method will return only integers
 
         Args:
             mean (:obj:`float`): mean value
             count (:obj:`int`): number of random numbers to generate
+            min (:obj:`float`): the minimum value of the numbers to include
+            count (:obj:`float`): the maximum value of the numbers to include
+            varfunc (:obj: 'function'): the function to use to calculate the standard deviation
+            round (:obj: 'boolean'): Whether or not to round the numbers to integers
 
         Returns:
-            :obj:`int` or :obj:`numpy.ndarray` of :obj:`int`: random normally distributed integer(s)
+            :obj:`float` or :obj:`numpy.ndarray` of :obj:`float`: random normally distributed number(s)
         """
-        a = (min-mean)/numpy.sqrt(mean)
-        b = (max - mean)/numpy.sqrt(mean)
-        return numpy.int64(numpy.round(stats.truncnorm.rvs(a, b, loc=mean, scale=numpy.sqrt(mean), size=count)))
+        if not varfunc:
+            varfunc = self.options.get('variation_function')
+        a = (min-mean)/varfunc(mean)
+        b = (max - mean)/varfunc(mean)
+        if round:
+            return numpy.int64(numpy.round(stats.truncnorm.rvs(a, b, size=count, loc=mean, scale=varfunc(mean))))
+        else:
+            return (stats.truncnorm.rvs(a, b, size=count, loc=mean, scale=varfunc(mean)))
