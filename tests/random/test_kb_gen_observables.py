@@ -8,7 +8,7 @@
 
 import wc_kb
 import unittest
-from wc_kb_gen.random import observables, genome, properties, compartments, complex
+from wc_kb_gen.random import observables, genome_old, properties, compartments, complex
 
 
 class ObservablesGeneratorTestCase(unittest.TestCase):
@@ -19,7 +19,7 @@ class ObservablesGeneratorTestCase(unittest.TestCase):
         gen.run()
         gen = compartments.CompartmentsGenerator(kb)
         gen.run()
-        gen = genome.GenomeGenerator(
+        gen = genome_old.GenomeGenerator(
             kb, options={'num_chromosomes': 1, 'mean_num_genes': 200})
         gen.run()
         gen = complex.ComplexGenerator(kb)

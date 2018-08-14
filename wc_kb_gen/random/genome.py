@@ -70,8 +70,6 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         assert(mean_num_genes >= 1)
         options['mean_num_genes'] = mean_num_genes
 
-        # print(mean_num_genes)
-
         num_ncRNA = options.get('num_ncRNA', 10)  # not sure
         options['num_ncRNA'] = num_ncRNA
 
@@ -83,15 +81,15 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         assert(num_tRNA >= 20)
         options['num_tRNA'] = num_tRNA
 
-        # number of protein observables
-        min_prots = options.get('min_prots', 8)
-        options['min_prots'] = min_prots
+        # Proteins that are to be assigned to a gene
+        assigned_prots = options.get('assigned_prots', [])
+        options['assigned_prots'] = assigned_prots
 
-        assert((num_ncRNA + num_rRNA + num_tRNA + min_prots) <= mean_num_genes)
+        assert (num_ncRNA + num_rRNA + num_tRNA +
+                len(assigned_prots) <= mean_num_genes)
 
         # DOI: 10.1093/molbev/msk019
-        mean_gene_len = options.get(
-            'mean_gene_len', 308)  # codon length (924 bp)
+        mean_gene_len = options.get('mean_gene_len', 300)
         assert(mean_gene_len >= 1)
         options['mean_gene_len'] = mean_gene_len
 
@@ -112,13 +110,17 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         assert(three_prime_len >= 0)
         options['three_prime_len'] = three_prime_len
 
-        operon_prop = (options.get('operon_prop', 0.2))  # guess
+        operon_prop = (options.get('operon_prop', 0.8))  # guess
         assert(operon_prop >= 0 and operon_prop <= 1)
         options['operon_prop'] = operon_prop
 
-        operon_gen_num = int(options.get('operon_gen_num', 3))
-        assert(operon_gen_num >= 2)
-        options['operon_gen_num'] = operon_gen_num
+        mean_operon_len = int(options.get('mean_operon_len', 4))
+        assert(mean_operon_len >= 2)
+        options['mean_operon_len'] = mean_operon_len
+
+        max_operon_len = int(options.get('max_operon_len', 7))
+        assert(max_operon_len >= 2)
+        options['max_operon_len'] = max_operon_len
 
         # DOI: 10.1038/ismej.2012.94
         mean_copy_number = options.get('mean_copy_number', 0.4)
@@ -132,34 +134,75 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
 
     def gen_components(self):
         self.gen_genome()
+        # self.gen_genome2()
         self.gen_tus()
         self.gen_rnas_proteins()
 
     def gen_genome(self):
-        '''Construct knowledge base components and generate the DNA sequence'''
-
-        # get options
+        # get options and apply variation
         options = self.options
-        num_chromosomes = options.get('num_chromosomes')
+        assigned_prots = options.get('assigned_prots')
+        operon_prop = self.rand(options.get("operon_prop"), min=0, max=1)
+        mean_operon_len = options.get('mean_operon_len')
+        max_operon_len = options.get('max_operon_len')
         mean_gene_len = options.get('mean_gene_len')
-        translation_table = options.get('translation_table')
-        mean_num_genes = options.get('mean_num_genes')
-        mean_coding_frac = options.get('mean_coding_frac')
-        mean_gc_frac = options.get('mean_gc_frac')
+        coding_frac = self.rand(options.get(
+            'mean_coding_frac'), min=0, max=1)
+
+        gc_frac = self.rand(options.get(
+            'mean_gc_frac'), min=0, max=1)
+
+        num_chromosomes = options.get('num_chromosomes')
         chromosome_topology = options.get('chromosome_topology')
         num_ncRNA = options.get('num_ncRNA')
         num_rRNA = options.get('num_rRNA')
         num_tRNA = options.get('num_tRNA')
-        min_prots = options.get('min_prots')
+        num_genes = options.get('mean_num_genes')
+        num_monocistronic_mRNA = int((
+            1-operon_prop)*(num_genes - num_tRNA - num_rRNA - num_ncRNA))
 
-        # print(tRNA_prop)
+        # This is also the number of operons
+        num_polycistronic_mRNA = int((
+            num_genes-num_monocistronic_mRNA-num_tRNA-num_ncRNA-num_rRNA)/mean_operon_len)
 
-        cell = self.knowledge_base.cell
+        operon_lens = self.rand(
+            mean=mean_operon_len, min=2, max=max_operon_len, count=num_polycistronic_mRNA, round=True)
+        print(num_genes)
+        print(num_monocistronic_mRNA)
+        print(numpy.sum(operon_lens))
+        print(num_polycistronic_mRNA)
+        print(num_monocistronic_mRNA +
+              numpy.sum(operon_lens)+num_ncRNA+num_tRNA+num_rRNA)
 
-        self.knowledge_base.translation_table = translation_table
+        gene_lens = self.rand(mean=mean_gene_len, min=1,
+                              count=num_genes, round=True)
+
+        gene_types = []
+        for i in range(num_tRNA):
+            gene_types.append("tRNA")
+        for i in range(num_ncRNA):
+            gene_types.append("ncRNA")
+        for i in range(num_rRNA):
+            gene_types.append("rRNA")
+        for i in range(num_monocistronic_mRNA):
+            gene_types.append("mRNA")
+        for i in range(num_polycistronic_mRNA):
+            gene_types.append('operon')
+
+        numpy.random.shuffle(gene_types)
+
+        gene_types = iter(gene_types)
+        operon_lens = iter(operon_lens)
+
+        for i in range(num_chromosomes):
+            pass
+
+    def gen_gene(size=0, type="mRNA", three_prime=1, five_prime=1):
+        self.knowledge_base.translation_table = options.get(
+            "translation_table")
 
         codon_table = CodonTable.unambiguous_dna_by_id[
-            translation_table]
+            options.get("translation_table")]
 
         # start codons from NCBI list
         START_CODONS = codon_table.start_codons
@@ -170,250 +213,11 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         BASES = ['A', 'C', 'G', 'T']  # The DNA Bases
 
         # The probability of each base being selected randomly
-        PROB_BASES = [(1 - mean_gc_frac) / 2, mean_gc_frac /
-                      2, mean_gc_frac/2, (1-mean_gc_frac)/2]
+        PROB_BASES = [(1 - gc_frac) / 2, gc_frac /
+                      2, gc_frac/2, (1-gc_frac)/2]
 
-        num_genes_all = self.rand(
-            mean_num_genes, min=num_tRNA + num_rRNA + num_ncRNA + min_prots)[0]
-
-        assignList = []
-        for i in range(num_genes_all):
-            if i < num_tRNA:
-                assignList.append(wc_kb.GeneType.tRna)
-            elif i >= num_tRNA and i < num_tRNA + num_rRNA:
-                assignList.append(wc_kb.GeneType.rRna)
-            elif i >= num_rRNA + num_tRNA and i < num_ncRNA + num_tRNA + num_rRNA:
-                assignList.append(wc_kb.GeneType.sRna)
-            else:
-                assignList.append(wc_kb.GeneType.mRna)
-
-        random.shuffle(assignList)
-
-        # Create a chromosome n times
-        for i_chr in range(num_chromosomes):
-            # number of genes in the chromosome
-            num_genes = math.ceil(num_genes_all / num_chromosomes)
-            # list of gene lengths (generated randomly) on chromosome
-            gene_lens = 3 * self.rand(mean_gene_len, count=num_genes, min=2)
-
-            intergene_lens = 3 * self.rand(
-                mean_gene_len / mean_coding_frac * (1 - mean_coding_frac), count=num_genes)
-
-            # sequence base triple length
-            seq_len = numpy.sum(gene_lens) + numpy.sum(intergene_lens)
-
-            seq_str = []
-            # generates seq based on random codons (NOT start/stop codons)
-            for i in range(0, seq_len, 3):
-                codon_i = STOP_CODONS[0]
-
-                codon_i = "".join(random.choice(
-                    BASES, p=PROB_BASES, size=(3,)))
-
-                seq_str.append(codon_i)
-
-            seq_str = "".join(seq_str)
-            seq = Seq(seq_str, Alphabet.DNAAlphabet())
-
-            chro = cell.species_types.get_or_create(
-                id='chr_{}'.format(i_chr + 1), __type=wc_kb.DnaSpeciesType)
-            chro.name = 'Chromosome {}'.format(i_chr + 1)
-            chro.circular = chromosome_topology == 'circular'
-            chro.double_stranded = True
-            chro.seq = seq
-
-            gene_starts = numpy.int64(numpy.cumsum(numpy.concatenate(([0], gene_lens[0:-1])) +
-                                                   numpy.concatenate((numpy.round(intergene_lens[0:1] / 2), intergene_lens[1:]))))
-
-            # creates GeneLocus objects for the genes and labels their GeneType (which type of RNA they transcribe)
-            for i_gene, gene_start in enumerate(gene_starts):
-                gene = self.knowledge_base.cell.loci.get_or_create(
-                    id='gene_{}_{}'.format(i_chr + 1, i_gene + 1), __type=wc_kb.GeneLocus)
-                gene.start = gene_start + 1  # 1-indexed
-                gene.polymer = chro
-                gene.end = gene.start + gene_lens[i_gene] - 1  # 1-indexed
-                # print(gene_lens[i_gene] % 3 == 0)
-                gene.name = 'gene {} {}'.format(i_chr+1, i_gene+1)
-
-                if len(assignList) > 0:
-                    gene.type = assignList.pop()
-                else:
-                    gene.type = wc_kb.GeneType.mRna
-
-                if gene.type == wc_kb.GeneType.mRna:  # if mRNA, then set up start/stop codons in the gene
-                    start_codon = random.choice(START_CODONS)
-                    stop_codon = random.choice(STOP_CODONS)
-                    seq_str = str(chro.seq)
-                    seq_str = seq_str[:gene.start-1] + start_codon + \
-                        seq_str[gene.start+2: gene.end-3] + \
-                        stop_codon + seq_str[gene.end:]
-                    for i in range(gene.start+2, gene.end-3, 3):
-                        # print(seq_str[i:i+3])
-                        while seq_str[i:i+3] in START_CODONS or seq_str[i:i+3] in STOP_CODONS:
-                            # print('here')
-                            codon_i = "".join(random.choice(
-                                BASES, p=PROB_BASES, size=(3,)))
-                            seq_str = seq_str[:i]+codon_i+seq_str[i+3:]
-
-                    chro.seq = Seq(seq_str, Alphabet.DNAAlphabet())
-
-    def gen_rnas_proteins(self):
-        """ Creates RNA and protein objects corresponding to genes on chromosome
-
-        """
-        options = self.options
-        mean_copy_number = options.get('mean_copy_number')
-        mean_half_life = options.get('mean_half_life')
-        mean_volume = self.knowledge_base.cell.properties.get_one(
-            id='initial_volume').value
-        for chromosome in self.knowledge_base.cell.species_types.get(__type=wc_kb.core.DnaSpeciesType):
-            for i in range(len(chromosome.loci)):
-
-                locus = chromosome.loci[i]
-
-                if type(locus) == wc_kb.TranscriptionUnitLocus:
-                    tu = locus
-
-                    # creates RnaSpeciesType for RNA sequence corresponding to gene
-                    rna = self.knowledge_base.cell.species_types.get_or_create(
-                        id='rna_{}'.format(tu.id), __type=wc_kb.RnaSpeciesType)
-                    rna.name = 'rna {}'.format(tu.id)
-                    # GeneLocus object for gene sequence, attribute of ProteinSpeciesType object
-                    if tu.genes[0].type == wc_kb.GeneType.mRna:
-                        rna.type = wc_kb.RnaType.mRna
-                    elif tu.genes[0].type == wc_kb.GeneType.rRna:
-                        # print('here')
-                        rna.type = wc_kb.RnaType.rRna
-                    elif tu.genes[0].type == wc_kb.GeneType.tRna:
-                        rna.type = wc_kb.RnaType.tRna
-                    elif tu.genes[0].type == wc_kb.GeneType.sRna:
-                        rna.type = wc_kb.RnaType.sRna
-
-                    # print(rna.type)
-                    rna.concentration = random.gamma(
-                        1, mean_copy_number) / scipy.constants.Avogadro / mean_volume
-                    rna.half_life = random.normal(
-                        mean_half_life, numpy.sqrt(mean_half_life))
-
-                    rna.transcription_units.append(tu)
-
-                    # print(rna.get_seq
-
-                    if rna.type == wc_kb.RnaType.mRna:
-                        for gene in tu.genes:
-                            # creates ProteinSpecipe object for corresponding protein sequence(s)
-                            # print(gene.get_seq()[0:3])
-                            prot = self.knowledge_base.cell.species_types.get_or_create(
-                                id='prot_{}'.format(gene.id), __type=wc_kb.ProteinSpeciesType)
-                            prot.name = 'prot_{}'.format(gene.id)
-
-                            prot.cell = self.knowledge_base.cell
-                            prot.cell.knowledge_base = self.knowledge_base
-
-                            prot.gene = gene  # associates protein with GeneLocus object for corresponding gene
-                            prot.rna = rna
-                            prot.half_life = 1
-                            prot.concentration = rna.concentration
-
-    def gen_tus(self):
-        """ Creates transcription units with 5'/3' UTRs, polycistronic mRNAs, and other types of RNA (tRNA, rRNA, sRNA)
-
-        """
-
-        # validate these options in the options method
-        options = self.options
-        # 7 bp default (E. coli, wikipedia)
-        five_prime_len = options.get('five_prime_len')
-        three_prime_len = options.get('three_prime_len')  # 5 bp default guess
-        operon_prop = options.get('operon_prop')  # 0.2 default guess
-        # 3 genes default (https://academic.oup.com/gbe/article/5/11/2242/653613)
-        operon_gen_num = options.get('operon_gen_num')
-
-        for i_chr, chromosome in enumerate(self.knowledge_base.cell.species_types.get(__type=wc_kb.core.DnaSpeciesType)):
-            seq = chromosome.seq
-            i_gene = 0
-            transcription_loci = []
-            # Todo make this into a proper for loop that deals with repeats/additional loci
-            while i_gene < len(chromosome.loci):
-
-                gene = chromosome.loci[i_gene]
-
-                if gene.type == wc_kb.GeneType.mRna:
-                    # polycistronic mRNA (multiple GeneLocus objects per TranscriptionUnitLocus)
-                   # print("mrna")
-
-                    five_prime = self.rand(five_prime_len)[0]
-                    three_prime = self.rand(three_prime_len)[0]
-                    operon_prob = random.random()
-
-                    # make an operon (polycistronic mRNA, put multiple genes in one TransUnitLocus)
-                    if operon_prob <= operon_prop:
-                       # print("ploycistronic")
-                        operon_genes = self.rand(operon_gen_num, min=2)[0]
-
-                        # add 3', 5' UTRs to the ends of the transcription unit (upstream of first gene, downstream of last gene)
-                        tu = self.knowledge_base.cell.loci.get_or_create(
-                            id='tu_{}_{}'.format(i_chr + 1, i_gene + 1), __type=wc_kb.TranscriptionUnitLocus)
-                        tu.name = 'tu {} {}'.format(i_chr+1, i_gene+1)
-
-                        five_prime_start = gene.start - five_prime
-                        if five_prime_start < 0:
-                            five_prime_start = 0
-                        tu.genes.append(gene)
-                        tu.start = five_prime_start
-
-                       # print(chromosome.loci)
-                        # print(operon_genes)
-                        for k in range(operon_genes-1):
-
-                            i_gene += 1
-
-                            if i_gene >= len(chromosome.loci):
-                                break
-
-                            if (chromosome.loci[i_gene]).type == wc_kb.GeneType.mRna:
-                                gene = chromosome.loci[i_gene]
-                                tu.genes.append(gene)
-
-                            else:
-                                break
-
-                        three_prime_end = gene.end + three_prime
-                        if three_prime_end >= len(seq):
-                            three_prime_end = len(seq) - 1
-                        tu.end = three_prime_end
-                        transcription_loci.append(tu)
-
-                    else:  # make an individual transcription unit for the gene
-                        # print("single")
-                        five_prime_start = gene.start - five_prime
-                        three_prime_end = gene.end + three_prime
-                        if five_prime_start < 0:
-                            five_prime_start = 0
-                        if three_prime_end >= len(seq):
-                            three_prime_end = len(seq) - 1
-                        tu = self.knowledge_base.cell.loci.get_or_create(
-                            id='tu_{}_{}'.format(i_chr + 1, i_gene + 1), __type=wc_kb.TranscriptionUnitLocus)
-                        tu.start = five_prime_start
-                        tu.end = three_prime_end
-                        tu.name = 'tu {} {}'.format(i_chr+1, i_gene+1)
-                        tu.genes.append(gene)
-                        transcription_loci.append(tu)
-                        i_gene += 1
-
-                # make a transcription unit that transcribes other types of RNA (tRNA, rRNA, sRNA)
-                else:
-                    tu = self.knowledge_base.cell.loci.get_or_create(
-                        id='tu_{}_{}'.format(i_chr + 1, i_gene + 1), __type=wc_kb.TranscriptionUnitLocus)
-                    tu.name = 'tu {} {}'.format(i_chr+1, i_gene+1)
-                    tu.start = gene.start
-                    tu.end = gene.end
-                    tu.genes.append(gene)
-                    transcription_loci.append(tu)
-                    i_gene += 1
-
-            for locus in transcription_loci:
-                locus.polymer = chromosome
+    def gen_tu(gene=None, size=1):
+        pass
 
     def rand(self, mean, count=1, min=0, max=numpy.inf, varfunc=None, round=False):
         """ Generated 1 or more random normally distributed values with standard deviation calculated by the provided variation function. If round flag is set, the method will return only integers

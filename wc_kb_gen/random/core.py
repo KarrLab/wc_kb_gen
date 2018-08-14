@@ -6,7 +6,7 @@
 :License: MIT
 """
 
-from .genome import GenomeGenerator
+from .genome_old import GenomeGenerator
 from .metabolites import MetabolitesGenerator
 from .properties import PropertiesGenerator
 from .compartments import CompartmentsGenerator
