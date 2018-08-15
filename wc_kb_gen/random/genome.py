@@ -14,6 +14,7 @@ import numpy
 from numpy import random
 from Bio.Seq import Seq, Alphabet
 from Bio.Data import CodonTable
+from types import *
 
 
 class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
@@ -133,90 +134,99 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         options['mean_half_life'] = mean_half_life
 
     def gen_components(self):
-        self.gen_genome()
-        # self.gen_genome2()
-        self.gen_tus()
-        self.gen_rnas_proteins()
+        self.gen_genome2()
+        # self.gen_tus()
+        # self.gen_rnas_proteins()
 
-    def gen_genome(self):
-        # get options and apply variation
+    def gen_genome2(self):
         options = self.options
-        assigned_prots = options.get('assigned_prots')
-        operon_prop = self.rand(options.get("operon_prop"), min=0, max=1)
-        mean_operon_len = options.get('mean_operon_len')
-        max_operon_len = options.get('max_operon_len')
-        mean_gene_len = options.get('mean_gene_len')
-        coding_frac = self.rand(options.get(
-            'mean_coding_frac'), min=0, max=1)
-
-        gc_frac = self.rand(options.get(
-            'mean_gc_frac'), min=0, max=1)
-
         num_chromosomes = options.get('num_chromosomes')
-        chromosome_topology = options.get('chromosome_topology')
         num_ncRNA = options.get('num_ncRNA')
         num_rRNA = options.get('num_rRNA')
         num_tRNA = options.get('num_tRNA')
-        num_genes = options.get('mean_num_genes')
-        num_monocistronic_mRNA = int((
-            1-operon_prop)*(num_genes - num_tRNA - num_rRNA - num_ncRNA))
+        mean_num_genes = options.get('mean_num_genes')
+        assigned_prots = options.get('assigned_prots')
 
-        # This is also the number of operons
-        num_polycistronic_mRNA = int((
-            num_genes-num_monocistronic_mRNA-num_tRNA-num_ncRNA-num_rRNA)/mean_operon_len)
+        min_num_genes = num_ncRNA + num_rRNA + num_tRNA + len(assigned_prots)
 
-        operon_lens = self.rand(
-            mean=mean_operon_len, min=2, max=max_operon_len, count=num_polycistronic_mRNA, round=True)
-        print(num_genes)
-        print(num_monocistronic_mRNA)
-        print(numpy.sum(operon_lens))
-        print(num_polycistronic_mRNA)
-        print(num_monocistronic_mRNA +
-              numpy.sum(operon_lens)+num_ncRNA+num_tRNA+num_rRNA)
+        num_genes = self.rand(mean=mean_num_genes,
+                              min=min_num_genes, round=True)
 
-        gene_lens = self.rand(mean=mean_gene_len, min=1,
-                              count=num_genes, round=True)
-
-        gene_types = []
-        for i in range(num_tRNA):
-            gene_types.append("tRNA")
-        for i in range(num_ncRNA):
-            gene_types.append("ncRNA")
-        for i in range(num_rRNA):
-            gene_types.append("rRNA")
-        for i in range(num_monocistronic_mRNA):
-            gene_types.append("mRNA")
-        for i in range(num_polycistronic_mRNA):
-            gene_types.append('operon')
-
-        numpy.random.shuffle(gene_types)
-
-        gene_types = iter(gene_types)
-        operon_lens = iter(operon_lens)
+        tu_types, operon_lens = self.gen_tu_types(num_genes)
+        print(tu_types)
+        print(operon_lens)
 
         for i in range(num_chromosomes):
             pass
 
-    def gen_gene(size=0, type="mRNA", three_prime=1, five_prime=1):
-        self.knowledge_base.translation_table = options.get(
-            "translation_table")
+    def gen_tu_types(self, num_genes: int) -> list:
 
-        codon_table = CodonTable.unambiguous_dna_by_id[
-            options.get("translation_table")]
+        options = self.options
+        operon_prop = options.get("operon_prop")
+        mean_operon_len = options.get('mean_operon_len')
+        max_operon_len = options.get('max_operon_len')
+        min_operon_len = options.get('min_operon_len', 2)
+        num_ncRNA = options.get('num_ncRNA')
+        num_rRNA = options.get('num_rRNA')
+        num_tRNA = options.get('num_tRNA')
 
-        # start codons from NCBI list
-        START_CODONS = codon_table.start_codons
+        num_monocistronic_mRNA = int((
+            1-operon_prop)*(num_genes - num_tRNA - num_rRNA - num_ncRNA))
 
-        # stop codons from NCBI list
-        STOP_CODONS = codon_table.stop_codons
+        # This is the number of genes that are contained within some operon
+        num_polycistronic_genes = int((
+            num_genes-num_monocistronic_mRNA-num_tRNA-num_ncRNA-num_rRNA))
 
-        BASES = ['A', 'C', 'G', 'T']  # The DNA Bases
+        operon_lens = []
 
-        # The probability of each base being selected randomly
-        PROB_BASES = [(1 - gc_frac) / 2, gc_frac /
-                      2, gc_frac/2, (1-gc_frac)/2]
+        while(numpy.sum(operon_lens) <= num_polycistronic_genes-max_operon_len):
+            operon_len = self.rand(
+                mean=mean_operon_len, min=min_operon_len, max=max_operon_len, round=True)
+            operon_lens.append(operon_len)
 
-    def gen_tu(gene=None, size=1):
+        operon_len = num_polycistronic_genes - numpy.sum(operon_lens)
+        operon_lens.append(operon_len)
+
+        assert (numpy.sum(operon_lens)+num_monocistronic_mRNA + num_ncRNA +
+                num_rRNA + num_tRNA) == num_genes, "Total number of genes is incorrect"
+
+        num_operons = len(operon_lens)
+
+        tu_types = []
+        for i in range(num_tRNA):
+            tu_types.append("tRNA")
+        for i in range(num_ncRNA):
+            tu_types.append("ncRNA")
+        for i in range(num_rRNA):
+            tu_types.append("rRNA")
+        for i in range(num_monocistronic_mRNA):
+            tu_types.append("mRNA")
+        for i in range(num_operons):
+            tu_types.append('operon')
+
+        numpy.random.shuffle(tu_types)
+
+        return tu_types, operon_lens
+
+    def gen_chromosomes(self, id_num: int, num_genes: int):
+        option = self.options
+        chromosome_topology = options.get('chromosome_topology')
+        cell = self.kb.cell
+
+        chromosome = cell.species_types.get_or_create(
+            id='chr_{}'.format(id_num + 1), __type=wc_kb.DnaSpeciesType)
+
+        chromosome.name = 'Chromosome {}'.format(id_num + 1)
+        chromosome.circular = chromosome_topology == 'circular'
+        chromosome.double_stranded = True
+
+    def gen_transcription_units(self):
+        pass
+
+    def gen_genes(self):
+        pass
+
+    def gen_sequence(self):
         pass
 
     def rand(self, mean, count=1, min=0, max=numpy.inf, varfunc=None, round=False):
@@ -226,7 +236,7 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
             mean (:obj:`float`): mean value
             count (:obj:`int`): number of random numbers to generate
             min (:obj:`float`): the minimum value of the numbers to include
-            count (:obj:`float`): the maximum value of the numbers to include
+            max (:obj:`float`): the maximum value of the numbers to include
             varfunc (:obj: 'function'): the function to use to calculate the standard deviation
             round (:obj: 'boolean'): Whether or not to round the numbers to integers
 
@@ -238,6 +248,12 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         a = (min-mean)/varfunc(mean)
         b = (max - mean)/varfunc(mean)
         if round:
-            return numpy.int64(numpy.round(stats.truncnorm.rvs(a, b, size=count, loc=mean, scale=varfunc(mean))))
+            if count == 1:
+                return numpy.int64(numpy.round(stats.truncnorm.rvs(a, b, size=count, loc=mean, scale=varfunc(mean))))[0]
+            else:
+                return numpy.int64(numpy.round(stats.truncnorm.rvs(a, b, size=count, loc=mean, scale=varfunc(mean))))
         else:
-            return (stats.truncnorm.rvs(a, b, size=count, loc=mean, scale=varfunc(mean)))
+            if count == 1:
+                return (stats.truncnorm.rvs(a, b, size=count, loc=mean, scale=varfunc(mean))[0])
+            else:
+                return (stats.truncnorm.rvs(a, b, size=count, loc=mean, scale=varfunc(mean)))
