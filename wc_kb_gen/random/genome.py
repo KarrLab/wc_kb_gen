@@ -1,9 +1,9 @@
 """
-:Author: Ashwin Srinivasan <ashwins@mit.edu>
 :Author: Bilal Shaikh <bilal.shaikh@columbia.edu>
-:Date: 2018-06-06
+:Date: 2018-08-16
 :Copyright: 2018, Karr Lab
 :License: MIT
+
 """
 import math
 import scipy.stats as stats
@@ -12,7 +12,7 @@ import wc_kb
 import wc_kb_gen
 import numpy
 from numpy import random
-from Bio.Seq import Seq, Alphabet
+import Bio.Seq
 from Bio.Data import CodonTable
 from types import *
 from enum import Enum
@@ -142,10 +142,13 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         assert(mean_half_life > 0)
         options['mean_half_life'] = mean_half_life
 
+        # 10.1093/nar/gks989 See also var_func for more realistic distribution
+        mean_intercistronic_len = options.get('mean_intercistronic_len', 1)
+        options['mean_intercistronic_len'] = mean_intercistronic_len
+
     def gen_components(self):
         self.gen_genome()
-        # self.gen_tus()
-        # self.gen_rnas_proteins()
+        self.gen_sequence()
 
     def gen_genome(self):
         options = self.options
@@ -172,7 +175,7 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
             else:
                 self.gen_chromosomes(id=i, num_tus=num_tus_per_chromosome)
 
-    def gen_tu_types(self, num_genes: int) -> list:
+    def gen_tu_types(self, num_genes):
 
         options = self.options
         operon_prop = options.get("operon_prop")
@@ -258,7 +261,7 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
                            tu_type=transcription_unit_type, count=num_genes)
 
     def gen_genes(self, transcription_unit, tu_type, count):
-        print(transcription_unit)
+
         for i in range(count):
             chrom_id = int(transcription_unit.polymer.id[4:])
             tu_id = int(transcription_unit.id[5:])
@@ -281,10 +284,104 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
 
             transcription_unit.genes.append(gene)
 
-            print(gene)
-            print(gene.type)
-
     def gen_sequence(self):
+        # Get various options
+        options = self.options
+        translation_table = options.get("translation_table")
+        mean_coding_frac = options.get('mean_coding_frac')
+        mean_gc_frac = options.get('mean_gc_frac')
+        mean_gene_len = options.get('mean_gene_len')
+        mean_intercistronic_len = options.get('mean_intercistronic_len')
+        codon_table = CodonTable.unambiguous_dna_by_id[
+            translation_table]
+
+        # start codons from NCBI list
+        START_CODONS = codon_table.start_codons
+
+        # stop codons from NCBI list
+        STOP_CODONS = codon_table.stop_codons
+
+        # The DNA Bases
+        BASES = ['A', 'C', 'G', 'T']
+
+        # The probability of each base being selected randomly
+        PROB_BASES = [(1 - mean_gc_frac) / 2, mean_gc_frac /
+                      2, mean_gc_frac/2, (1-mean_gc_frac)/2]
+
+        cell = self.knowledge_base.cell
+        chromosomes = cell.species_types.get(__type=wc_kb.DnaSpeciesType)
+
+        # Generate a sequence for each chromosome
+        for chromosome in chromosomes:
+            seq = ""  # Start with an empty sequence
+
+            # Create an intergene spacing based on intergene_lens
+
+            tus = chromosome.loci.get(__type=wc_kb.TranscriptionUnitLocus)
+            # Generate a sequence for each transcription unit in the chromosome
+            for tu in tus:
+                # Start the trancription unit at the current end of the sequence
+                tu.start = len(seq)
+
+                # Start the 3' UTR of the transcription unit
+
+                # Create a PromoterLocus
+
+                genes = tu.genes
+                # Generate a sequence for each gene in the transcription unit
+                for gene in genes:
+
+                    # Determine the length of this gene randomly. Subtract 2 for start/stop codons
+                    gene_len = self.rand(
+                        mean=mean_gene_len, count=1, round=True)-2
+
+                    # Add the start codon
+                    seq += numpy.random.choice(START_CODONS)
+
+                    # The gene starts at the last base of the sequence (which is the start codon)
+                    gene.start = len(seq)  # 1 indexed
+
+                    # Generate this genes sequence, using the proportions of Gs and Cs
+                    for i in range(gene_len):
+                        # Ensure that no stop codons are inserted
+                        codon_i = STOP_CODONS[0]
+                        while(codon_i in STOP_CODONS):
+                            # Create a random codon, not a stop codon
+                            codon_i = "".join(numpy.random.choice(
+                                BASES, p=PROB_BASES, size=(3,)))
+                        # add the codon to the sequence
+                        seq += codon_i
+
+                    # Add the stop codon
+                    seq += numpy.random.choice(STOP_CODONS)
+
+                    # The gene ends here
+                    gene.end = len(seq)
+
+                    # Add an intercistronic spacer
+                    space = self.rand(mean=mean_intercistronic_len,
+                                      count=1, round=True, varfunc=lambda x: 1)
+                    seq += ("".join(numpy.random.choice(
+                        BASES, p=PROB_BASES, size=(space,))))
+                    # Gene Sequence generation is now done, continue with Tu Sequence (5' end)
+
+                # Generate the 5' UTR of the trancription Unit
+                # The tu ends here
+                tu.end = len(seq)
+
+            # The last tu has been generated. Convert the sequence into BioSeqAttribute
+            chr_seq = Bio.Seq.Seq(seq, Bio.Seq.Alphabet.DNAAlphabet())
+            chromosome.seq = chr_seq
+
+            # Repeat for next chromosome
+
+    def gen_promoters(self):
+        pass
+
+    def gen_rna(self):
+        pass
+
+    def gen_proteins(self):
         pass
 
     def rand(self, mean, count=1, min=0, max=numpy.inf, varfunc=None, round=False):
@@ -295,8 +392,8 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
             count (:obj:`int`): number of random numbers to generate
             min (:obj:`float`): the minimum value of the numbers to include
             max (:obj:`float`): the maximum value of the numbers to include
-            varfunc (:obj:'function'): the function to use to calculate the standard deviation
-            round (:obj:'boolean'): Whether or not to round the numbers to integers
+            varfunc (:obj:`function`): the function to use to calculate the standard deviation
+            round (:obj:`boolean`): Whether or not to round the numbers to integers
 
         Returns:
             :obj:`float` or :obj:`numpy.ndarray` of :obj:`float`: random normally distributed number(s)
