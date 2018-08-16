@@ -15,6 +15,15 @@ from numpy import random
 from Bio.Seq import Seq, Alphabet
 from Bio.Data import CodonTable
 from types import *
+from enum import Enum
+
+
+class TuType(Enum):
+    OPERON = 0
+    MRNA = 1
+    TRNA = 2
+    RRNA = 3
+    NCRNA = 4
 
 
 class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
@@ -134,11 +143,11 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         options['mean_half_life'] = mean_half_life
 
     def gen_components(self):
-        self.gen_genome2()
+        self.gen_genome()
         # self.gen_tus()
         # self.gen_rnas_proteins()
 
-    def gen_genome2(self):
+    def gen_genome(self):
         options = self.options
         num_chromosomes = options.get('num_chromosomes')
         num_ncRNA = options.get('num_ncRNA')
@@ -152,12 +161,16 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         num_genes = self.rand(mean=mean_num_genes,
                               min=min_num_genes, round=True)
 
-        tu_types, operon_lens = self.gen_tu_types(num_genes)
-        print(tu_types)
-        print(operon_lens)
+        self.tu_types, self.operon_lens = self.gen_tu_types(num_genes)
+
+        num_tus_per_chromosome = len(self.tu_types)//num_chromosomes
+        mod = len(self.tu_types) % num_chromosomes
 
         for i in range(num_chromosomes):
-            pass
+            if i == num_chromosomes - 1:
+                self.gen_chromosomes(id=i, num_tus=num_tus_per_chromosome+mod)
+            else:
+                self.gen_chromosomes(id=i, num_tus=num_tus_per_chromosome)
 
     def gen_tu_types(self, num_genes: int) -> list:
 
@@ -194,37 +207,82 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
 
         tu_types = []
         for i in range(num_tRNA):
-            tu_types.append("tRNA")
+            tu_types.append(TuType.TRNA)
         for i in range(num_ncRNA):
-            tu_types.append("ncRNA")
+            tu_types.append(TuType.NCRNA)
         for i in range(num_rRNA):
-            tu_types.append("rRNA")
+            tu_types.append(TuType.RRNA)
         for i in range(num_monocistronic_mRNA):
-            tu_types.append("mRNA")
+            tu_types.append(TuType.MRNA)
         for i in range(num_operons):
-            tu_types.append('operon')
+            tu_types.append(TuType.OPERON)
 
         numpy.random.shuffle(tu_types)
 
         return tu_types, operon_lens
 
-    def gen_chromosomes(self, id_num: int, num_genes: int):
-        option = self.options
+    def gen_chromosomes(self, id: int, num_tus: int):
+        options = self.options
         chromosome_topology = options.get('chromosome_topology')
-        cell = self.kb.cell
+        cell = self.knowledge_base.cell
 
         chromosome = cell.species_types.get_or_create(
-            id='chr_{}'.format(id_num + 1), __type=wc_kb.DnaSpeciesType)
+            id='chr_{}'.format(id + 1), __type=wc_kb.DnaSpeciesType)
 
-        chromosome.name = 'Chromosome {}'.format(id_num + 1)
+        chromosome.name = 'Chromosome {}'.format(id + 1)
         chromosome.circular = chromosome_topology == 'circular'
         chromosome.double_stranded = True
 
-    def gen_transcription_units(self):
-        pass
+        for i in range(num_tus):
+            self.gen_transcription_units(chromosome, i)
 
-    def gen_genes(self):
-        pass
+    def gen_transcription_units(self, chromosome, tu_num):
+
+        # Cast so that bad id will cause error
+        chrom_num = int(chromosome.id[4:])
+
+        tu = self.knowledge_base.cell.loci.get_or_create(
+            id='tu_{}_{}'.format(chrom_num, tu_num + 1), __type=wc_kb.TranscriptionUnitLocus)
+        tu.name = 'Transcription Unit {} {}'.format(chrom_num, tu_num+1)
+        tu.polymer = chromosome
+
+        transcription_unit_type = self.tu_types.pop()
+
+        if (transcription_unit_type == TuType.OPERON):
+            num_genes = self.operon_lens.pop()
+            self.gen_genes(transcription_unit=tu,
+                           tu_type=transcription_unit_type, count=num_genes)
+        else:
+            num_genes = 1
+            self.gen_genes(transcription_unit=tu,
+                           tu_type=transcription_unit_type, count=num_genes)
+
+    def gen_genes(self, transcription_unit, tu_type, count):
+        print(transcription_unit)
+        for i in range(count):
+            chrom_id = int(transcription_unit.polymer.id[4:])
+            tu_id = int(transcription_unit.id[5:])
+            gene = self.knowledge_base.cell.loci.get_or_create(
+                id='gene_{}_{}_{}'.format(chrom_id, tu_id, i+1), __type=wc_kb.GeneLocus)
+
+            gene.name = 'gene_{}_{}_{}'.format(chrom_id, tu_id, i+1)
+            gene.polymer = transcription_unit.polymer
+
+            if(tu_type is TuType.OPERON):
+                gene.type = wc_kb.GeneType.mRna
+            elif(tu_type is TuType.MRNA):
+                gene.type = wc_kb.GeneType.mRna
+            elif(tu_type is TuType.RRNA):
+                gene.type = wc_kb.GeneType.rRna
+            elif(tu_type is TuType.TRNA):
+                gene.type = wc_kb.GeneType.tRna
+            elif(tu_type is TuType.NCRNA):
+                gene.type = wc_kb.GeneType.sRna
+
+            transcription_unit.genes.append(gene)
+
+            print(gene)
+            print(gene.type)
 
     def gen_sequence(self):
         pass
@@ -237,8 +295,8 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
             count (:obj:`int`): number of random numbers to generate
             min (:obj:`float`): the minimum value of the numbers to include
             max (:obj:`float`): the maximum value of the numbers to include
-            varfunc (:obj: 'function'): the function to use to calculate the standard deviation
-            round (:obj: 'boolean'): Whether or not to round the numbers to integers
+            varfunc (:obj:'function'): the function to use to calculate the standard deviation
+            round (:obj:'boolean'): Whether or not to round the numbers to integers
 
         Returns:
             :obj:`float` or :obj:`numpy.ndarray` of :obj:`float`: random normally distributed number(s)
