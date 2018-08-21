@@ -37,7 +37,6 @@ class ComplexGenerator(wc_kb_gen.KbComponentGenerator):
             complex.formation_process = 7
             complex.concentration = 1e-2
             prot = cell.species_types.get(__type=wc_kb.ProteinSpeciesType)[0]
-            print(prot.species)
             prot_species = prot.species.get_or_create(compartment=cytosol)
             prot_coeff = prot_species.species_coefficients.get_or_create(
                 coefficient=1)
@@ -46,12 +45,3 @@ class ComplexGenerator(wc_kb_gen.KbComponentGenerator):
             complex_species = complex.species.get_or_create(
                 compartment=cytosol)
 
-            print(complex)
-            print(complex_species)
-
-            '''species_30S = cell.species_types.get_one(id = 'subunit_30S').species.get_one(compartment = cytosol)
-                species_50S = cell.species_types.get_one(
-                    id = 'subunit_50S').species.get_one(compartment = cytosol)
-                comp_species.subunits.append(
-                    species_30S.species_coefficients.get_or_create(coefficient = 1))
-                comp_species.subunits.append(species_50S.species_coefficients.get_or_create(coefficient = 1))'''
