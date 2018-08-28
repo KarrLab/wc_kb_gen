@@ -33,9 +33,9 @@ class ObservablesGenerator(wc_kb_gen.KbComponentGenerator):
         assigned_trnas = options.get('assigned_trnas', default_trnas)
         options['assigned_trnas'] = assigned_trnas
 
-        assigned_proteins = options.get('assigned_proteins', ['IF', 'EF', 'RF',
-                                                              'deg_ATPase', 'deg_protease', 'deg_rnase',
-                                                              'rna_poly', 'aminoacyl_synthetase'])
+        assigned_proteins = options.get('assigned_proteins', [
+            'translation_init_factors', 'translation_elongation_factors', 'translation_release_factors',
+            'degrade_protease', 'degrade_rnase', 'rna_polymerase', 'aminoacyl_synthetase'])
 
         prots = self.knowledge_base.cell.species_types.get(
             __type=wc_kb.ProteinSpeciesType)

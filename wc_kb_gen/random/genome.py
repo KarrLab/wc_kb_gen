@@ -284,15 +284,12 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
                     elif tu.genes[0].type == wc_kb.GeneType.sRna:
                         rna.type = wc_kb.RnaType.sRna
 
-                    # print(rna.type)
                     rna.concentration = random.gamma(
                         1, mean_copy_number) / scipy.constants.Avogadro / mean_volume
                     rna.half_life = random.normal(
                         mean_half_life, numpy.sqrt(mean_half_life))
 
                     rna.transcription_units.append(tu)
-
-                    # print(rna.get_seq
 
                     if rna.type == wc_kb.RnaType.mRna:
                         for gene in tu.genes:
