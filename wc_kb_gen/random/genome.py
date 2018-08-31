@@ -74,6 +74,7 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         num_rRNA = options.get('num_rRNA', 7)
         options['num_rRNA'] = num_rRNA
 
+        # disabeled while playing w transcription only models
         num_tRNA = options.get('num_tRNA', 20)
         assert(num_tRNA >= 20)
         options['num_tRNA'] = num_tRNA
@@ -82,7 +83,8 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         min_prots = options.get('min_prots', 8)
         options['min_prots'] = min_prots
 
-        assert((num_ncRNA + num_rRNA + num_tRNA + min_prots) <= mean_num_genes)
+        # disabeled while playing w transcription only models
+        #assert((num_ncRNA + num_rRNA + num_tRNA + min_prots) <= mean_num_genes)
 
         # DOI: 10.1093/molbev/msk019
         mean_gene_len = options.get(
@@ -284,8 +286,12 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
                     elif tu.genes[0].type == wc_kb.GeneType.sRna:
                         rna.type = wc_kb.RnaType.sRna
 
-                    rna.concentration = random.gamma(
-                        1, mean_copy_number) / scipy.constants.Avogadro / mean_volume
+                    # why use gamma dist instead normal?
+                    #rna.concentration = random.gamma(
+                    #    1, mean_copy_number) / scipy.constants.Avogadro / mean_volume
+
+                    rna.concentration = round(random.normal(loc=mean_copy_number,scale=15)) / scipy.constants.Avogadro / mean_volume
+
                     rna.half_life = random.normal(
                         mean_half_life, numpy.sqrt(mean_half_life))
 
