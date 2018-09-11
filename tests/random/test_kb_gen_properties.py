@@ -13,8 +13,8 @@ import wc_kb
 
 class PropertiesGeneratorTestCase(unittest.TestCase):
     def test(self):
-        kb = wc_kb.KnowledgeBase()
-        cell = kb.cell = wc_kb.Cell()
+        kb = wc_kb.core.KnowledgeBase()
+        cell = kb.cell = wc_kb.core.Cell()
         gen = properties.PropertiesGenerator(kb, options={
             'mean_doubling_time': 3600,
         })

@@ -47,22 +47,22 @@ class MetabolitesGeneratorTestCase(unittest.TestCase):
         os.remove(self.data_path)
 
     def test_run(self):
-        kb = wc_kb.KnowledgeBase()
-        cell = kb.cell = wc_kb.Cell()
+        kb = wc_kb.core.KnowledgeBase()
+        cell = kb.cell = wc_kb.core.Cell()
         gen = metabolites.MetabolitesGenerator(kb, options={
             'data_path': self.data_path,
         })
         gen.run()
 
         h2o = cell.species_types.get_one(
-            __type=wc_kb.MetaboliteSpeciesType, id='h2o')
+            __type=wc_kb.core.MetaboliteSpeciesType, id='h2o')
         self.assertEqual(h2o.get_empirical_formula(),
                          wc_utils.util.chem.EmpiricalFormula('H2O'))
         self.assertEqual(h2o.get_charge(), 0)
         self.assertEqual(h2o.concentration, 55.)
 
         h = cell.species_types.get_one(
-            __type=wc_kb.MetaboliteSpeciesType, id='h')
+            __type=wc_kb.core.MetaboliteSpeciesType, id='h')
         self.assertEqual(h.get_empirical_formula(),
                          wc_utils.util.chem.EmpiricalFormula('H'))
         self.assertEqual(h.get_charge(), 1)

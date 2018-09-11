@@ -64,14 +64,14 @@ class KbGenerator(object):
         """ Generate a knowledge base of experimental data for a whole-cell model
 
         Returns:
-            :obj:`wc_kb.KnowledgeBase`: knowledge base
+            :obj:`wc_kb.core.KnowledgeBase`: knowledge base
         """
-        kb = wc_kb.KnowledgeBase()
+        kb = wc_kb.core.KnowledgeBase()
         kb.id = self.options.get('id')
         kb.name = self.options.get('name')
         kb.version = self.options.get('version')
 
-        kb.cell = wc_kb.Cell(id='cell')
+        kb.cell = wc_kb.core.Cell(id='cell')
 
         component_options = self.options.get('component', {})
         for component_generator in self.component_generators:
@@ -85,14 +85,14 @@ class KbComponentGenerator(object):
     """ Base class for knowledge base component generators
 
     Attributes:
-        knowledge_base (:obj:`wc_kb.KnowledgeBase`): knowledge base
+        knowledge_base (:obj:`wc_kb.core.KnowledgeBase`): knowledge base
         options (:obj:`dict`, optional): options
     """
 
     def __init__(self, knowledge_base, options=None):
         """
         Args:
-            knowledge_base (:obj:`wc_kb.KnowledgeBase`): knowledge base
+            knowledge_base (:obj:`wc_kb.core.KnowledgeBase`): knowledge base
             options (:obj:`dict`, optional): options
         """
         self.knowledge_base = knowledge_base

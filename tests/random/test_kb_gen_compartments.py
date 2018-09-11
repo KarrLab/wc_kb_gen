@@ -15,8 +15,8 @@ from wc_kb_gen.random import compartments
 
 class CompartmentsGeneratorTestCase(unittest.TestCase):
     def test_run(self):
-        kb = wc_kb.KnowledgeBase()
-        cell = kb.cell = wc_kb.Cell()
+        kb = wc_kb.core.KnowledgeBase()
+        cell = kb.cell = wc_kb.core.Cell()
         gen = compartments.CompartmentsGenerator(kb, options={'compartments': [
                                                  ('c', 'cytosol'), ('e', 'extracellular space'), ('t', 'test')]})
 
@@ -31,8 +31,8 @@ class CompartmentsGeneratorTestCase(unittest.TestCase):
         self.assertEqual(test.name, 'test')
 
     def test_default(self):
-        kb = wc_kb.KnowledgeBase()
-        cell = kb.cell = wc_kb.Cell()
+        kb = wc_kb.core.KnowledgeBase()
+        cell = kb.cell = wc_kb.core.Cell()
         gen = compartments.CompartmentsGenerator(kb)
 
         gen.run()
@@ -43,7 +43,7 @@ class CompartmentsGeneratorTestCase(unittest.TestCase):
         self.assertEqual(extra.name, 'extracellular space')
 
     def test_validation(self):
-        kb = wc_kb.KnowledgeBase()
+        kb = wc_kb.core.KnowledgeBase()
 
         with self.assertRaisesRegex(AssertionError, "Could not find cytosol"):
             gen = compartments.CompartmentsGenerator(kb, options={'compartments': [

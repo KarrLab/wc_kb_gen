@@ -80,8 +80,8 @@ class TestKbGenerator(unittest.TestCase):
         self.assertEqual(kb.cell.compartments.get_one(id='mmm').name, 'Membrane')
 
     def test_KbComponentGenerator(self):
-        kb = wc_kb.KnowledgeBase()
-        kb.cell = wc_kb.Cell()
+        kb = wc_kb.core.KnowledgeBase()
+        kb.cell = wc_kb.core.Cell()
 
         class TestKbComponentGenerator(wc_kb_gen.KbComponentGenerator):
             def get_data(self):
@@ -96,4 +96,4 @@ class TestKbGenerator(unittest.TestCase):
         gen = TestKbComponentGenerator(kb, options={'value': 'c'})
         gen.run()
 
-        self.assertIsInstance(kb.cell.compartments.get_one(id='cc'), wc_kb.Compartment)
+        self.assertIsInstance(kb.cell.compartments.get_one(id='cc'), wc_kb.core.Compartment)

@@ -33,10 +33,10 @@ class ComplexGenerator(wc_kb_gen.KbComponentGenerator):
         assigned_complexes = self.options['assigned_complexes']
         for complex_name in assigned_complexes:
             complex = cell.species_types.get_or_create(
-                id=complex_name, __type=wc_kb.ComplexSpeciesType)
+                id=complex_name, __type=wc_kb.core.ComplexSpeciesType)
             complex.formation_process = 7
             complex.concentration = 1e-2
-            prot = cell.species_types.get(__type=wc_kb.ProteinSpeciesType)[0]
+            prot = cell.species_types.get(__type=wc_kb.prokaryote_schema.ProteinSpeciesType)[0]
             prot_species = prot.species.get_or_create(compartment=cytosol)
             prot_coeff = prot_species.species_coefficients.get_or_create(
                 coefficient=1)

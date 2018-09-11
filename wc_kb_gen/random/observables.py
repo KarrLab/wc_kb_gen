@@ -38,7 +38,7 @@ class ObservablesGenerator(wc_kb_gen.KbComponentGenerator):
             'degrade_protease', 'degrade_rnase', 'rna_polymerase', 'aminoacyl_synthetase'])
 
         prots = self.knowledge_base.cell.species_types.get(
-            __type=wc_kb.ProteinSpeciesType)
+            __type=wc_kb.prokaryote_schema.ProteinSpeciesType)
 
         assert(len(assigned_proteins) <= len(prots))
         options['assigned_proteins'] = assigned_proteins
@@ -56,9 +56,9 @@ class ObservablesGenerator(wc_kb_gen.KbComponentGenerator):
         assigned_proteins = self.options['assigned_proteins']
         assigned_complexes = self.options['assigned_complexes']
         prots = self.knowledge_base.cell.species_types.get(
-            __type=wc_kb.ProteinSpeciesType)
+            __type=wc_kb.prokaryote_schema.ProteinSpeciesType)
         rnas = self.knowledge_base.cell.species_types.get(
-            __type=wc_kb.RnaSpeciesType)
+            __type=wc_kb.prokaryote_schema.RnaSpeciesType)
         trnas = []
         for rna in rnas:
             if rna.type == wc_kb.RnaType.tRna:
@@ -109,7 +109,7 @@ class ObservablesGenerator(wc_kb_gen.KbComponentGenerator):
 
         for comp in assigned_complexes:
             comp_species = cell.species_types.get_or_create(
-                id=comp, __type=wc_kb.ComplexSpeciesType)
+                id=comp, __type=wc_kb.core.ComplexSpeciesType)
             observable = cell.observables.get_or_create(id=comp+'_obs')
             observable.name = comp
             observable.species.append(comp_species.species.get_one(

@@ -31,7 +31,7 @@ class KbGeneratorTestCase(unittest.TestCase):
 
         kb = gen.run()
         self.assertEqual(len(kb.cell.species_types.get(
-            __type=wc_kb.DnaSpeciesType)), 10)
+            __type=wc_kb.prokaryote_schema.DnaSpeciesType)), 10)
 
         errors = obj_model.Validator().run(kb, get_related=True)
         self.assertEqual(
