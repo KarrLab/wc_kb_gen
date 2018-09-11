@@ -41,7 +41,7 @@ class TestGenomeGenerator(unittest.TestCase):
 
     def test_num_chromosomes(self):
         chromosomes = self.kb.cell.species_types.get(
-            __type=wc_kb.prokaryote_schema.DnaSpeciesType)
+            __type=wc_kb.core.DnaSpeciesType)
         self.assertEqual(len(chromosomes),
                          self.options.get('num_chromosomes'))
 
