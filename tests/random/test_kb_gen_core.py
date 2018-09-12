@@ -19,7 +19,7 @@ class KbGeneratorTestCase(unittest.TestCase):
             'component': {
                 'PropertiesGenerator': {
                     'mean_volume': 1e-15,
-                    'mean_doubling_time': 100,
+                    'mean_cell_cycle_length': 100,
                 },
                 'GenomeGenerator': {
                     'num_chromosomes': 10,
