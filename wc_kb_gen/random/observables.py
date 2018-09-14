@@ -71,11 +71,14 @@ class ObservablesGenerator(wc_kb_gen.KbComponentGenerator):
         prots = self.knowledge_base.cell.species_types.get(__type=wc_kb.prokaryote_schema.ProteinSpeciesType)
         rnas = self.knowledge_base.cell.species_types.get(__type=wc_kb.prokaryote_schema.RnaSpeciesType)
 
+        print('here')
         trnas = []
         for rna in rnas:
             if rna.type == wc_kb.RnaType.tRna:
                 trnas.append(rna)
 
+        print(trnas)
+        
         if genetic_code=='normal':
             codons = {
                 'I': ['ATT', 'ATC', 'ATA'],

@@ -12,6 +12,8 @@ import scipy.stats as stats
 import scipy.constants
 import wc_kb
 import wc_kb_gen
+from Bio.Seq import Seq, Alphabet
+import random
 import numpy
 from numpy import random
 from Bio.Seq import Seq, Alphabet
@@ -125,15 +127,17 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         options['mean_half_life'] = mean_half_life
 
         # disabeled while playing w transcription only models
-        # num_tRNA = options.get('num_tRNA', 20)
+        num_tRNA = options.get('num_tRNA', 20)
+        options['num_tRNA'] = num_tRNA
+
         # assert(num_tRNA >= 20)
-        # options['num_tRNA'] = num_tRNA
         #assert((num_ncRNA + num_rRNA + num_tRNA + min_prots) <= mean_num_genes)
 
     def gen_components(self):
         self.gen_genome()
         self.gen_tus()
         self.gen_rnas_proteins()
+        self.reduce_model()
 
     def gen_genome(self):
         '''Construct knowledge base components and generate the DNA sequence'''
@@ -410,6 +414,34 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
                             prot.rna = rna
                             prot.half_life = 1
                             prot.concentration = rna.concentration
+
+    def reduce_model(self):
+        options = self.options
+        genetic_code = options.get('genetic_code')
+
+        if genetic_code=='normal':
+            pass
+
+        elif genetic_code=='reduced':
+            cell = self.knowledge_base.cell
+            kb = self.knowledge_base
+
+            bases = "TCAG"
+            codons = [a + b + c for a in bases for b in bases for c in bases]
+
+            dna  = kb.cell.species_types.get(__type = wc_kb.core.DnaSpeciesType)[0]
+            seq_str  = str(dna.seq)
+            seq_list = list(seq_str)
+
+            for prot in kb.cell.species_types.get(__type = wc_kb.prokaryote_schema.ProteinSpeciesType):
+                for base_num in range(prot.gene.start+2,prot.gene.end-3,3):
+                    new_codon = random.choice(['ATC', 'CTG', 'ATG', 'ACG'])
+                    seq_list[base_num]=new_codon[0]
+                    seq_list[base_num+1]=new_codon[1]
+                    seq_list[base_num+2]=new_codon[2]
+
+            seq_str_new = ''.join(seq_list)
+            dna.seq=Seq(seq_str_new)
 
     def rand(self, mean, count=1, min=0, max=numpy.inf):
         """ Generated 1 or more random normally distributed integer(s) with standard deviation equal

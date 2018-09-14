@@ -79,24 +79,6 @@ class KbGenerator(object):
             options = component_options.get(component_generator.__name__, {})
             component_generator(kb, options=options).run()
 
-        # Experimental code to ensure reduced genetic code
-        bases = "TCAG"
-        codons = [a + b + c for a in bases for b in bases for c in bases]
-        dna  = kb.cell.species_types.get(__type = wc_kb.core.DnaSpeciesType)[0]
-        seq_str  = str(dna.seq)
-        seq_list = list(seq_str)
-
-        for prot in kb.cell.species_types.get(__type = wc_kb.prokaryote_schema.ProteinSpeciesType):
-            for base_num in range(prot.gene.start+2,prot.gene.end-3,3):
-                new_codon = random.choice(['ATC', 'CTG', 'ATG', 'ACG'])
-                seq_list[base_num]=new_codon[0]
-                seq_list[base_num+1]=new_codon[1]
-                seq_list[base_num+2]=new_codon[2]
-
-        seq_str_new = ''.join(seq_list)
-        dna.seq=Seq(seq_str_new)
-        # End of genetic code reduction
-
         return kb
 
 class KbComponentGenerator(object):
