@@ -296,7 +296,6 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
 
                 if gene.type == wc_kb.core.GeneType.mRna:
                     # polycistronic mRNA (multiple GeneLocus objects per TranscriptionUnitLocus)
-                   # print("mrna")
 
                     five_prime = self.rand(five_prime_len)[0]
                     three_prime = self.rand(three_prime_len)[0]
