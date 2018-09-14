@@ -22,7 +22,7 @@ class ComplexGenerator(wc_kb_gen.KbComponentGenerator):
         """ Apply default options and validate options """
         options = self.options
         assigned_complexes = options.get(
-            'assigned_complexes', ['complex_70S'])
+            'assigned_complexes', ['ribosome'])
 
         options['assigned_complexes'] = assigned_complexes
 

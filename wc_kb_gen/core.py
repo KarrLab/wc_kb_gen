@@ -7,7 +7,8 @@
 """
 
 import wc_kb
-
+from Bio.Seq import Seq, Alphabet
+import random
 
 class KbGenerator(object):
     """ Generator for knowledge bases of experimental data for whole-cell models
@@ -19,11 +20,11 @@ class KbGenerator(object):
     * component
 
     Attributes:
-        component_generators (:obj:`list` of :obj:`KbComponentGenerator`): component 
+        component_generators (:obj:`list` of :obj:`KbComponentGenerator`): component
             generators of the knowledge base
         options (:obj:`dict`, optional): dictionary of options whose keys are the names
             of component generator classes and whose values are dictionaries of options
-            for the component generator classes    
+            for the component generator classes
     """
 
     DEFAULT_COMPONENT_GENERATORS = ()
@@ -31,7 +32,7 @@ class KbGenerator(object):
     def __init__(self, component_generators=None, options=None):
         """
         Args:
-            component_generators (:obj:`list` of :obj:`KbComponentGenerator`, optional): component 
+            component_generators (:obj:`list` of :obj:`KbComponentGenerator`, optional): component
                 generators of the knowledge base
             options (:obj:`dict`, optional): dictionary of options whose keys are the names
                 of component generator classes and whose values are dictionaries of options
@@ -78,8 +79,25 @@ class KbGenerator(object):
             options = component_options.get(component_generator.__name__, {})
             component_generator(kb, options=options).run()
 
-        return kb
+        # Experimental code to ensure reduced genetic code
+        bases = "TCAG"
+        codons = [a + b + c for a in bases for b in bases for c in bases]
+        dna  = kb.cell.species_types.get(__type = wc_kb.core.DnaSpeciesType)[0]
+        seq_str  = str(dna.seq)
+        seq_list = list(seq_str)
 
+        for prot in kb.cell.species_types.get(__type = wc_kb.prokaryote_schema.ProteinSpeciesType):
+            for base_num in range(prot.gene.start+2,prot.gene.end-3,3):
+                new_codon = random.choice(['ATC', 'CTG', 'ATG', 'ACG'])
+                seq_list[base_num]=new_codon[0]
+                seq_list[base_num+1]=new_codon[1]
+                seq_list[base_num+2]=new_codon[2]
+
+        seq_str_new = ''.join(seq_list)
+        dna.seq=Seq(seq_str_new)
+        # End of genetic code reduction
+
+        return kb
 
 class KbComponentGenerator(object):
     """ Base class for knowledge base component generators
@@ -96,7 +114,7 @@ class KbComponentGenerator(object):
             options (:obj:`dict`, optional): options
         """
         self.knowledge_base = knowledge_base
-        
+
         self.options = options or {}
         self.clean_and_validate_options()
 
@@ -105,7 +123,7 @@ class KbComponentGenerator(object):
         pass  # pragma: no cover
 
     def run(self):
-        """ Generate knowledge base components """        
+        """ Generate knowledge base components """
         self.get_data()
         self.process_data()
         self.gen_components()
