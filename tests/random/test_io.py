@@ -39,6 +39,7 @@ class KbAndModelIOTestCase(unittest.TestCase):
                          'ObservablesGenerator': {
                              'genetic_code': 'reduced'},
                          }}).run()
+                         
         kb = wc_kb_gen.random.RandomKbGenerator(options={
                      'component': {
                          'GenomeGenerator': {
