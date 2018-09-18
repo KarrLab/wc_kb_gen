@@ -8,7 +8,7 @@ import tempfile
 import shutil
 import os
 
-class KbAndModelIOTestCase(unittest.TestCase):
+class KbIOTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -26,34 +26,17 @@ class KbAndModelIOTestCase(unittest.TestCase):
                          'GenomeGenerator': {
                              'genetic_code': 'reduced',
                              'mean_num_genes': 30,
-                             'mean_gene_len': 70,
                              'num_tRNA': 4,
-                             'num_rRNA': 0,
-                             'num_ncRNA': 0,
-                             'min_prots': 5,
-                             'translation_table': 4,
-                             'mean_copy_number': 100,
-                             'mean_half_life': 100},
-                         'PropertiesGenerator': {
-                             'mean_cell_cycle_length': 100},
+                             'translation_table': 4},
                          'ObservablesGenerator': {
                              'genetic_code': 'reduced'},
                          }}).run()
-                         
+
         kb = wc_kb_gen.random.RandomKbGenerator(options={
                      'component': {
                          'GenomeGenerator': {
-                             'mean_num_genes': 30,
-                             'mean_gene_len': 70,
-                             'num_rRNA': 0,
-                             'num_ncRNA': 0,
-                             'min_prots': 5,
-                             'translation_table': 4,
-                             'mean_copy_number': 100,
-                             'mean_half_life': 100},
-                         'PropertiesGenerator': {
-                             'mean_cell_cycle_length': 100},
-                         }}).run()
+                             'mean_num_genes': 100,
+                             'mean_gene_len': 70}}}).run()
 
         self.assertIsInstance(kb_reduced, wc_kb.core.KnowledgeBase)
         self.assertIsInstance(kb, wc_kb.core.KnowledgeBase)
@@ -63,6 +46,7 @@ class KbAndModelIOTestCase(unittest.TestCase):
                               core_path=os.path.join(self.dir, 'kb_reduced.xlsx'),
                               seq_path=os.path.join(self.dir, 'kb_reduced_seq.fna'),
                               set_repo_metadata_from_path=False)
+
         wc_kb.io.Writer().run(knowledge_base=kb,
                            core_path=os.path.join(self.dir, 'kb.xlsx'),
                            seq_path=os.path.join(self.dir, 'kb_seq.fna'),

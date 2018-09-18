@@ -29,7 +29,6 @@ class ObservablesGenerator(wc_kb_gen.KbComponentGenerator):
         assert(genetic_code in ['normal', 'reduced'])
         options['genetic_code'] = genetic_code
 
-        """
         genetic_code = options['genetic_code']
         if genetic_code=='normal':
             bases = "TCAG"
@@ -43,7 +42,6 @@ class ObservablesGenerator(wc_kb_gen.KbComponentGenerator):
 
         assigned_trnas = options.get('assigned_trnas', default_trnas)
         options['assigned_trnas'] = assigned_trnas
-        """
 
         assigned_proteins = options.get('assigned_proteins', [
             'translation_init_factors',
@@ -67,7 +65,7 @@ class ObservablesGenerator(wc_kb_gen.KbComponentGenerator):
         cell = self.knowledge_base.cell
         cytosol = cell.compartments.get_one(id='c')
         genetic_code = self.options['genetic_code']
-        #assigned_trnas = self.options['assigned_trnas']
+        assigned_trnas = self.options['assigned_trnas']
         assigned_proteins = self.options['assigned_proteins']
         assigned_complexes = self.options['assigned_complexes']
         prots = self.knowledge_base.cell.species_types.get(__type=wc_kb.prokaryote_schema.ProteinSpeciesType)
@@ -107,10 +105,6 @@ class ObservablesGenerator(wc_kb_gen.KbComponentGenerator):
                 'L': ['CTG'],
                 'M': ['ATG'],
                 'T': ['ACG']}
-
-        default_trnas=[]
-        for codon in codons:
-            default_trnas.append('tRNA_'+codon)
 
         for aa in codons:
             rna = numpy.random.choice(trnas)

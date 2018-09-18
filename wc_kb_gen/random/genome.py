@@ -59,32 +59,39 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         options['genetic_code'] = genetic_code
 
         num_chromosomes = options.get('num_chromosomes', 1)
-        assert(num_chromosomes >= 1 and int(
-            num_chromosomes) == num_chromosomes)
+        assert(num_chromosomes >= 1 and int(num_chromosomes) == num_chromosomes)
         options['num_chromosomes'] = num_chromosomes
 
         chromosome_topology = options.get('chromosome_topology', 'circular')
         assert(chromosome_topology in ['circular', 'linear'])
         options['chromosome_topology'] = chromosome_topology
 
-        mean_gc_frac = options.get('mean_gc_frac', 0.58)
-        assert(mean_gc_frac >= 0 and mean_gc_frac <= 1)
-        options['mean_gc_frac'] = mean_gc_frac
-
         mean_num_genes = options.get('mean_num_genes', 4500)
         assert(mean_num_genes >= 1)
         options['mean_num_genes'] = mean_num_genes
 
         num_ncRNA = options.get('num_ncRNA', 10)  # not sure
+        assert(isinstance(num_ncRNA, int))
         options['num_ncRNA'] = num_ncRNA
 
         # http://book.bionumbers.org/how-many-ribosomal-rna-gene-copies-are-in-the-genome/
         num_rRNA = options.get('num_rRNA', 7)
+        assert(isinstance(num_rRNA, int))
         options['num_rRNA'] = num_rRNA
 
-        # number of protein observables
+        num_tRNA = options.get('num_tRNA', 20)
+        assert(isinstance(num_tRNA, int))
+        options['num_tRNA'] = num_tRNA
+
         min_prots = options.get('min_prots', 8)
+        assert(isinstance(min_prots, int))
         options['min_prots'] = min_prots
+
+        assert((num_ncRNA + num_rRNA + num_tRNA + min_prots) <= mean_num_genes)
+
+        mean_gc_frac = options.get('mean_gc_frac', 0.58)
+        assert(mean_gc_frac >= 0 and mean_gc_frac <= 1)
+        options['mean_gc_frac'] = mean_gc_frac
 
         # DOI: 10.1093/molbev/msk019
         mean_gene_len = options.get('mean_gene_len', 308)  # codon length (924 bp)
@@ -116,27 +123,26 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         assert(operon_gen_num >= 2)
         options['operon_gen_num'] = operon_gen_num
 
-        # DOI: 10.1038/ismej.2012.94
-        mean_copy_number = options.get('mean_copy_number', 0.4)
-        assert(mean_copy_number > 0)
-        options['mean_copy_number'] = mean_copy_number
-
         # DOI: 10.1073/pnas.0308747101
         mean_half_life = options.get('mean_half_life', 2.1 * 60)
         assert(mean_half_life > 0)
         options['mean_half_life'] = mean_half_life
 
-        # disabeled while playing w transcription only models
-        num_tRNA = options.get('num_tRNA', 20)
-        options['num_tRNA'] = num_tRNA
+        # DOI: 10.1038/ismej.2012.94
+        mean_rna_copy_number = options.get('mean_rna_copy_number', 0.4)
+        assert(mean_rna_copy_number > 0)
+        options['mean_rna_copy_number'] = mean_rna_copy_number
 
-        # assert(num_tRNA >= 20)
-        #assert((num_ncRNA + num_rRNA + num_tRNA + min_prots) <= mean_num_genes)
+        # DOI: 10.1038/ismej.2012.94
+        mean_protein_copy_number = options.get('mean_protein_copy_number', 75)
+        assert(mean_protein_copy_number > 0)
+        options['mean_protein_copy_number'] = mean_protein_copy_number
 
     def gen_components(self):
         self.gen_genome()
         self.gen_tus()
         self.gen_rnas_proteins()
+        self.gen_concentrations()
         self.reduce_model()
 
     def gen_genome(self):
@@ -396,7 +402,6 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
                     elif tu.genes[0].type == wc_kb.core.GeneType.sRna:
                         rna.type = wc_kb.core.RnaType.sRna
 
-                    rna.concentration = round(random.normal(loc=mean_copy_number,scale=15)) / scipy.constants.Avogadro / mean_volume
                     rna.half_life = random.normal(mean_half_life, numpy.sqrt(mean_half_life))
                     rna.transcription_units.append(tu)
 
@@ -412,7 +417,25 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
                             prot.gene = gene  # associates protein with GeneLocus object for corresponding gene
                             prot.rna = rna
                             prot.half_life = 1
-                            prot.concentration = rna.concentration
+                            #prot.concentration = rna.concentration
+
+    def gen_concentrations(self):
+        options = self.options
+        cell = self.knowledge_base.cell
+        cytosol = cell.compartments.get_one(id='c')
+        mean_volume = cell.properties.get_one(id='initial_volume').value
+        mean_rna_copy_number     = options.get('mean_rna_copy_number')
+        mean_protein_copy_number = options.get('mean_protein_copy_number')
+
+        for rna in cell.species_types.get(__type=wc_kb.prokaryote_schema.RnaSpeciesType):
+            rna_specie = rna.species.get_or_create(compartment=cytosol)
+            conc = round(abs(random.normal(loc=mean_rna_copy_number,scale=15))) / scipy.constants.Avogadro / mean_volume
+            cell.concentrations.get_or_create(species=rna_specie, value=conc, units='M')
+
+        for prot in cell.species_types.get(__type=wc_kb.prokaryote_schema.ProteinSpeciesType):
+            prot_specie = prot.species.get_or_create(compartment=cytosol)
+            conc = round(abs(random.normal(loc=mean_protein_copy_number,scale=15))) / scipy.constants.Avogadro / mean_volume
+            cell.concentrations.get_or_create(species=prot_specie, value=conc, units='M')
 
     def reduce_model(self):
         options = self.options

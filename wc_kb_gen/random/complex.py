@@ -8,7 +8,12 @@
 
 import wc_kb
 import wc_kb_gen
-
+import random
+import numpy
+from numpy import random
+import math
+import scipy.stats as stats
+import scipy.constants
 
 class ComplexGenerator(wc_kb_gen.KbComponentGenerator):
     """
@@ -21,9 +26,12 @@ class ComplexGenerator(wc_kb_gen.KbComponentGenerator):
     def clean_and_validate_options(self):
         """ Apply default options and validate options """
         options = self.options
-        assigned_complexes = options.get(
-            'assigned_complexes', ['ribosome'])
 
+        mean_complex_copy_number = options.get('mean_complex_copy_number', 100)
+        assert(mean_complex_copy_number > 0)
+        options['mean_complex_copy_number'] = mean_complex_copy_number
+
+        assigned_complexes = options.get('assigned_complexes', ['ribosome'])
         options['assigned_complexes'] = assigned_complexes
 
     def gen_components(self):
@@ -31,17 +39,18 @@ class ComplexGenerator(wc_kb_gen.KbComponentGenerator):
         cell = self.knowledge_base.cell
         cytosol = cell.compartments.get_one(id='c')
         assigned_complexes = self.options['assigned_complexes']
+        mean_complex_copy_number = self.options['mean_complex_copy_number']
+        mean_volume = cell.properties.get_one(id='initial_volume').value
+
         for complex_name in assigned_complexes:
-            complex = cell.species_types.get_or_create(
-                id=complex_name, __type=wc_kb.core.ComplexSpeciesType)
-            complex.formation_process = 7
-            complex.concentration = 1e-2
+            cmplex_st = cell.species_types.get_or_create(id=complex_name, __type=wc_kb.core.ComplexSpeciesType)
+            cmplex_specie = cmplex_st.species.get_or_create(compartment=cytosol)
+            cmplex_st.formation_process = 7
+
             prot = cell.species_types.get(__type=wc_kb.prokaryote_schema.ProteinSpeciesType)[0]
             prot_species = prot.species.get_or_create(compartment=cytosol)
-            prot_coeff = prot_species.species_coefficients.get_or_create(
-                coefficient=1)
-            complex.subunits.append(prot_coeff)
+            prot_coeff = prot_species.species_coefficients.get_or_create(coefficient=1)
+            cmplex_st.subunits.append(prot_coeff)
 
-            complex_species = complex.species.get_or_create(
-                compartment=cytosol)
-
+            conc = round(abs(random.normal(loc=mean_complex_copy_number,scale=15))) / scipy.constants.Avogadro / mean_volume
+            cell.concentrations.get_or_create(species=cmplex_specie, value=conc, units='M')
