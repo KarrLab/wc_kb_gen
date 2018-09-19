@@ -24,7 +24,7 @@ class TestGenomeGenerator(unittest.TestCase):
                     'mean_cell_cycle_length': 1000.,
                 },
                 'GenomeGenerator': {
-                    'mean_num_genes': 200.,
+                    'num_genes': 200.,
                 },
             },
         })

@@ -23,7 +23,7 @@ class KbGeneratorTestCase(unittest.TestCase):
                 },
                 'GenomeGenerator': {
                     'num_chromosomes': 10,
-                    'mean_num_genes': 200,
+                    'num_genes': 200,
                     'mean_copy_number': 200,
                 },
             },

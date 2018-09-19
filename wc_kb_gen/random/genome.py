@@ -29,7 +29,7 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
 
     * num_chromosomes (:obj:`int`): number of chromosomes
     * mean_gc_frac (:obj:`float`): fraction of nucleotides which are G or C
-    * mean_num_genes (:obj:`float`): mean number of genes
+    * num_genes (:obj:`float`): mean number of genes
     * mean_gene_len (:obj:`float`): mean codon length of a gene
     * mean_coding_frac (:obj:`float`): mean coding fraction of the genome
     * translation_table (:obj:'int'): The NCBI standard genetic code used
@@ -66,9 +66,9 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         assert(chromosome_topology in ['circular', 'linear'])
         options['chromosome_topology'] = chromosome_topology
 
-        mean_num_genes = options.get('mean_num_genes', 4500)
-        assert(mean_num_genes >= 1)
-        options['mean_num_genes'] = mean_num_genes
+        num_genes = options.get('num_genes', 4500)
+        assert(num_genes >= 1)
+        options['num_genes'] = int(num_genes)
 
         num_ncRNA = options.get('num_ncRNA', 10)  # not sure
         assert(isinstance(num_ncRNA, int))
@@ -87,7 +87,7 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         assert(isinstance(min_prots, int))
         options['min_prots'] = min_prots
 
-        assert((num_ncRNA + num_rRNA + num_tRNA + min_prots) <= mean_num_genes)
+        assert((num_ncRNA + num_rRNA + num_tRNA + min_prots) <= num_genes)
 
         mean_gc_frac = options.get('mean_gc_frac', 0.58)
         assert(mean_gc_frac >= 0 and mean_gc_frac <= 1)
@@ -154,7 +154,7 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         num_chromosomes = options.get('num_chromosomes')
         mean_gene_len = options.get('mean_gene_len')
         translation_table = options.get('translation_table')
-        mean_num_genes = options.get('mean_num_genes')
+        num_genes = options.get('num_genes')
         mean_coding_frac = options.get('mean_coding_frac')
         mean_gc_frac = options.get('mean_gc_frac')
         chromosome_topology = options.get('chromosome_topology')
@@ -183,7 +183,7 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         PROB_BASES = [(1 - mean_gc_frac) / 2, mean_gc_frac /2, mean_gc_frac/2, (1-mean_gc_frac)/2]
 
         # Draw the total number of genes
-        num_genes_all = self.rand(mean_num_genes, min=num_tRNA + num_rRNA + num_ncRNA + min_prots)[0]
+        num_genes_all = num_genes
 
         assignList = []
         for i in range(num_genes_all):

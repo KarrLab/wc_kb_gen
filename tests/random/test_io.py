@@ -25,7 +25,7 @@ class KbIOTestCase(unittest.TestCase):
                      'component': {
                          'GenomeGenerator': {
                              'genetic_code': 'reduced',
-                             'mean_num_genes': 30,
+                             'num_genes': 30,
                              'num_tRNA': 4,
                              'translation_table': 4},
                          'ObservablesGenerator': {
@@ -35,7 +35,7 @@ class KbIOTestCase(unittest.TestCase):
         kb = wc_kb_gen.random.RandomKbGenerator(options={
                      'component': {
                          'GenomeGenerator': {
-                             'mean_num_genes': 100,
+                             'num_genes': 100,
                              'mean_gene_len': 70}}}).run()
 
         self.assertIsInstance(kb_reduced, wc_kb.core.KnowledgeBase)
