@@ -20,7 +20,7 @@ class ComplexGenerator(wc_kb_gen.KbComponentGenerator):
     Creates ComplexSpeciesType objects for ribosomes (and any other complexes that user specifies in assigned_complexes).
 
     Options:
-        * assigned_complexes (:obj:'list'): A list of the names of complexes to be created
+        * assigned_complexes (:obj:`list`): A list of the names of complexes to be created
     """
 
     def clean_and_validate_options(self):

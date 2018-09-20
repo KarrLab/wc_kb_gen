@@ -15,9 +15,9 @@ class ObservablesGenerator(wc_kb_gen.KbComponentGenerator):
     Creates observable objects for proteins and tRNAs and complexes that are assigned to specific functions. Adds these observables to the knowledge base.
 
     Options:
-        * assigned_trnas (:obj:'list'): A list of the names of trnas to be created
-        * assigned_proteins (:obj: 'list'): A list of the names of proteins to be created
-        * assigned_complexes (:obj:'list'): A list of the names of complexes to be created
+        * assigned_trnas (:obj:`list`): A list of the names of trnas to be created
+        * assigned_proteins (:obj:`list`): A list of the names of proteins to be created
+        * assigned_complexes (:obj:`list`): A list of the names of complexes to be created
     """
 
     def clean_and_validate_options(self):
