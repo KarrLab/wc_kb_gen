@@ -5,16 +5,15 @@ from .properties import PropertiesGenerator
 from .observables import ObservablesGenerator
 from .compartments import CompartmentsGenerator
 from .complex import ComplexGenerator
-import logging
 from os import path, remove
+import logging
 import sys
 
-if path.isfile("RandomKbGenerator.log"):
-    remove("RandomKbGenerator.log")
 root_logger = logging.getLogger(__name__)
 root_logger.setLevel(logging.DEBUG)
 
-root_logger_file_handler = logging.FileHandler("RandomKbGenerator.log")
+filename = path.expanduser("~/.wc/log/wc_kb_gen.log")
+root_logger_file_handler = logging.FileHandler(filename)
 root_logger_file_handler.setLevel(logging.DEBUG)
 
 root_logger_output_handler = logging.StreamHandler(sys.stdout)
