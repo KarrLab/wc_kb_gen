@@ -7,6 +7,7 @@ from .compartments import CompartmentsGenerator
 from .complex import ComplexGenerator
 from os import path, remove
 import logging
+import os
 import sys
 
 root_logger = logging.getLogger(__name__)
