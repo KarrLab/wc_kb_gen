@@ -1,4 +1,5 @@
 """ Test the generation of a random chromosome and accompanying mRNA and protein sequences
+
 :Author: Bilal Shaikh <bilal.shaikh@columbia.edu>
 :Author: Ashwin Srinivasan <ashwins@mit.edu>
 :Date: 2018-06-13
@@ -6,8 +7,8 @@
 :License: MIT
 """
 import math
-import wc_kb
 import unittest
+import wc_kb
 import wc_kb_gen
 from Bio.Data import CodonTable
 
@@ -177,8 +178,8 @@ class TestGenomeGenerator(unittest.TestCase):
             avg_operon_gen, operon_gen_num, delta=3 * math.sqrt(operon_gen_num))
 
     def test_protein_start_codon(self):
-
-        for protein in self.kb.cell.species_types.get(__type=wc_kb.prokaryote_schema.ProteinSpeciesType):
+        proteins = self.kb.cell.species_types.get(__type=wc_kb.prokaryote_schema.ProteinSpeciesType)
+        for protein in proteins:
             seq = str(protein.get_seq())
             self.assertEqual(seq[0], 'M')
 
@@ -192,7 +193,3 @@ class TestGenomeGenerator(unittest.TestCase):
 
     def tearDown(self):
         pass
-
-
-if __name__ == '__main__':
-    unittest.main()

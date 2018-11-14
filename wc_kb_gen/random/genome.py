@@ -8,22 +8,23 @@
 """
 
 import math
-import scipy.stats as stats
+import numpy
+import random
 import scipy.constants
 import wc_kb
 import wc_kb_gen
-from Bio.Seq import Seq, Alphabet
-import random
-import numpy
-from numpy import random
-from Bio.Seq import Seq, Alphabet
 from Bio.Data import CodonTable
+from Bio.Seq import Seq, Alphabet
+from numpy import random
+from scipy import stats
 
 
 class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
     """
-    Creates synthetic chromosome with randomized genes/intergenic regions. Creates RNA and protein objects corresponding to the genes on this chromosome. Associates the chromosome, RNAs, proteins
-    with a knowledge base object (and its Cell attribute)
+    Generate synthetic chromosome with randomized genes/intergenic
+    regions. Creates RNA and protein objects corresponding to the genes
+    this chromosome. Associates the chromosome, RNAs, proteins
+    with a knowledge base object (and its Cell attribute).
 
     Options:
 
@@ -168,10 +169,10 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
 
         codon_table = CodonTable.unambiguous_dna_by_id[translation_table]
 
-        if genetic_code=='normal':
+        if genetic_code == 'normal':
             START_CODONS = codon_table.start_codons
 
-        elif genetic_code=='reduced':
+        elif genetic_code == 'reduced':
             START_CODONS = ['CTG']
 
         # stop codons from NCBI list
@@ -264,9 +265,9 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
                     for i in range(gene.start+2, gene.end-3, 3):
                         while seq_str[i:i+3] in START_CODONS or seq_str[i:i+3] in STOP_CODONS:
 
-                            if genetic_code=='normal':
+                            if genetic_code == 'normal':
                                 codon_i = "".join(random.choice(BASES, p=PROB_BASES, size=(3,)))
-                            elif genetic_code=='reduced':
+                            elif genetic_code == 'reduced':
                                 codon_i = "".join(random.choice(['ATC', 'CTG', 'ATG', 'ACG']))
 
                             seq_str = seq_str[:i]+codon_i+seq_str[i+3:]
@@ -376,6 +377,8 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         """ Creates RNA and protein objects corresponding to genes on chromosome
 
         """
+        cell = self.knowledge_base.cell
+
         options = self.options
         mean_copy_number = options.get('mean_copy_number')
         mean_half_life = options.get('mean_half_life')
@@ -412,12 +415,12 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
                                 id='prot_{}'.format(gene.id), __type=wc_kb.prokaryote_schema.ProteinSpeciesType)
                             prot.name = 'prot_{}'.format(gene.id)
 
-                            prot.cell = self.knowledge_base.cell
+                            prot.cell = cell
                             prot.cell.knowledge_base = self.knowledge_base
                             prot.gene = gene  # associates protein with GeneLocus object for corresponding gene
                             prot.rna = rna
                             prot.half_life = 1
-                            #prot.concentration = rna.concentration
+                            #prot.concentration = wc_kb.Concentration(cell=cell, value=rna.concentration.value)
 
     def gen_concentrations(self):
         options = self.options
@@ -441,10 +444,10 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         options = self.options
         genetic_code = options.get('genetic_code')
 
-        if genetic_code=='normal':
+        if genetic_code == 'normal':
             pass
 
-        elif genetic_code=='reduced':
+        elif genetic_code == 'reduced':
             cell = self.knowledge_base.cell
             kb = self.knowledge_base
 
