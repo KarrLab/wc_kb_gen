@@ -12,7 +12,10 @@ import sys
 root_logger = logging.getLogger(__name__)
 root_logger.setLevel(logging.DEBUG)
 
-filename = path.expanduser("~/.wc/log/wc_kb_gen.log")
+dirname = path.expanduser('~/.wc/log')
+if not path.isdir(dirname):
+    os.makedirs(dirname)
+filename = path.join(dirname, 'wc_kb_gen.log')
 root_logger_file_handler = logging.FileHandler(filename)
 root_logger_file_handler.setLevel(logging.DEBUG)
 
