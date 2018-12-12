@@ -47,6 +47,7 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
     * mean_half_life (:obj:`float`): mean half-life of RNAs
     * genetic_code (:obj:`str`): 'normal' / 'reduced', if reduced only 'I': ['ATC'], 'L': ['CTG'],
         'M': ['ATG'], 'T': ['ACG'] codons in genome
+    * seq_path (:obj:`str`): path to save genome sequence    
     """
 
     def clean_and_validate_options(self):
