@@ -6,27 +6,45 @@
 :License: MIT
 """
 
-import wc_kb
+import os
+import shutil
+import tempfile
 import unittest
+import wc_kb
 from wc_kb_gen.random import observables, genome, properties, compartments, complex
 
 
 class ObservablesGeneratorTestCase(unittest.TestCase):
     def setUp(self):
+        self.dir = tempfile.mkdtemp()
+
         kb = wc_kb.core.KnowledgeBase()
         self.cell = kb.cell = wc_kb.core.Cell()
+
         gen = properties.PropertiesGenerator(kb)
         gen.run()
+
         gen = compartments.CompartmentsGenerator(kb)
         gen.run()
+
         gen = genome.GenomeGenerator(
-            kb, options={'num_chromosomes': 1, 'num_genes': 200})
+            kb, options={
+                'num_chromosomes': 1, 
+                'num_genes': 200, 
+                'seq_path': os.path.join(self.dir, 'kb_seq.fna')})
         gen.run()
+
         gen = complex.ComplexGenerator(kb)
         gen.run()
+
         gen = observables.ObservablesGenerator(
-            kb, options={'assigned_proteins': ['a', 'b', 'c'], 'assigned_trnas': ['x', 'y', 'z']})
+            kb, options={
+                'assigned_proteins': ['a', 'b', 'c'], 
+                'assigned_trnas': ['x', 'y', 'z']})
         gen.run()
+
+    def tearDown(self):
+        shutil.rmtree(self.dir)
 
     '''def test_assignment(self):
         cell = self.cell

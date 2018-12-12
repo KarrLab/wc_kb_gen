@@ -8,6 +8,9 @@
 
 from wc_kb_gen import random
 import obj_model
+import os
+import shutil
+import tempfile
 import unittest
 import wc_kb
 import wc_utils.util.string
@@ -15,6 +18,7 @@ import wc_utils.util.string
 
 class KbGeneratorTestCase(unittest.TestCase):
     def test(self):
+        self.dir = tempfile.mkdtemp()
         gen = random.RandomKbGenerator(options={
             'component': {
                 'PropertiesGenerator': {
@@ -25,6 +29,7 @@ class KbGeneratorTestCase(unittest.TestCase):
                     'num_chromosomes': 10,
                     'num_genes': 200,
                     'mean_copy_number': 200,
+                    'seq_path': os.path.join(self.dir, 'kb_seq.fna'),
                 },
             },
         })
@@ -36,6 +41,8 @@ class KbGeneratorTestCase(unittest.TestCase):
         errors = obj_model.Validator().run(kb, get_related=True)
         self.assertEqual(
             errors, None, msg=wc_utils.util.string.indent_forest(errors))
+
+        shutil.rmtree(self.dir)
 
     def test_clean_and_validate_options(self):
         gen = random.RandomKbGenerator()
