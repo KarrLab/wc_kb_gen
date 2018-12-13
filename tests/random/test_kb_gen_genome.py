@@ -28,7 +28,7 @@ class TestGenomeGenerator(unittest.TestCase):
             'component': {
                 'PropertiesGenerator': {
                     'mean_volume': 1e-15,
-                    'mean_cell_cycle_length': 1000.,
+                    'mean_cell_cycle_len': 1000.,
                 },
                 'GenomeGenerator': {
                     'num_genes': 200.,
