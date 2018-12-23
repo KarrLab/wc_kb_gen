@@ -1,6 +1,5 @@
 from wc_model_gen import prokaryote
 import unittest
-import wc_lang
 import wc_kb_gen
 import wc_kb
 import unittest

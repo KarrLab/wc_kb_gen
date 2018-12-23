@@ -16,7 +16,7 @@ class PropertiesGenerator(wc_kb_gen.KbComponentGenerator):
     Options:
 
     * mean_volume (:obj:`float`): mean volume in L
-    * mean_cell_cycle_len (:obj:`float`): mean doubling time in s
+    * mean_doubling_time (:obj:`float`): mean doubling time in s
     """
 
     def clean_and_validate_options(self):
@@ -27,13 +27,9 @@ class PropertiesGenerator(wc_kb_gen.KbComponentGenerator):
         assert(mean_volume > 0)
         options['mean_volume'] = mean_volume
 
-        mean_fraction_dry_weight = options.get('mean_fraction_dry_weight', 0.3)
-        assert(mean_fraction_dry_weight > 0)
-        options['mean_fraction_dry_weight'] = mean_fraction_dry_weight
-
-        mean_cell_cycle_len = options.get('mean_cell_cycle_len', 30 * 60)
-        assert(mean_cell_cycle_len > 0)
-        options['mean_cell_cycle_len'] = mean_cell_cycle_len
+        mean_doubling_time = options.get('mean_doubling_time', 30 * 60)
+        assert(mean_doubling_time > 0)
+        options['mean_doubling_time'] = mean_doubling_time
 
         mean_cell_density = options.get('mean_cell_density', 1e6)
         assert(mean_cell_density > 0)
@@ -48,16 +44,12 @@ class PropertiesGenerator(wc_kb_gen.KbComponentGenerator):
         # generate properties
         cell = self.knowledge_base.cell
 
-        prop = cell.properties.get_or_create(id='initial_volume')
+        prop = cell.properties.get_or_create(id='mean_volume')
         prop.value = options.get('mean_volume')
         prop.units = 'L'
 
-        prop = cell.properties.get_or_create(id='fraction_dry_weight')
-        prop.value = options.get('mean_fraction_dry_weight')
-        prop.units = 'dimensionless'
-
-        prop = cell.properties.get_or_create(id='cell_cycle_len')
-        prop.value = options.get('mean_cell_cycle_len')
+        prop = cell.properties.get_or_create(id='mean_doubling_time')
+        prop.value = options.get('mean_doubling_time')
         prop.units = 's'
 
         prop = cell.properties.get_or_create(id='cell_density')

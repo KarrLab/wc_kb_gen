@@ -40,7 +40,7 @@ class ComplexGenerator(wc_kb_gen.KbComponentGenerator):
         cytosol = cell.compartments.get_one(id='c')
         assigned_complexes = self.options['assigned_complexes']
         mean_complex_copy_number = self.options['mean_complex_copy_number']
-        mean_volume = cell.properties.get_one(id='initial_volume').value
+        mean_volume = cell.properties.get_one(id='mean_volume').value
 
         for complex_name in assigned_complexes:
             cmplex_st = cell.species_types.get_or_create(id=complex_name, __type=wc_kb.core.ComplexSpeciesType)

@@ -16,9 +16,9 @@ class PropertiesGeneratorTestCase(unittest.TestCase):
         kb = wc_kb.core.KnowledgeBase()
         cell = kb.cell = wc_kb.core.Cell()
         gen = properties.PropertiesGenerator(kb, options={
-            'mean_cell_cycle_len': 3600,
+            'mean_doubling_time': 3600,
         })
         gen.run()
 
         self.assertEqual(cell.properties.get_one(
-            id='cell_cycle_len').value, 3600)
+            id='mean_doubling_time').value, 3600)

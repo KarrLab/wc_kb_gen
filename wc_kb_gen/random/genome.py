@@ -397,7 +397,7 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         options = self.options
         mean_copy_number = options.get('mean_copy_number')
         mean_half_life = options.get('mean_half_life')
-        mean_volume = self.knowledge_base.cell.properties.get_one(id='initial_volume').value
+        mean_volume = self.knowledge_base.cell.properties.get_one(id='mean_volume').value
 
         for chromosome in self.knowledge_base.cell.species_types.get(__type=wc_kb.core.DnaSpeciesType):
             for i in range(len(chromosome.loci)):
@@ -441,7 +441,7 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         options = self.options
         cell = self.knowledge_base.cell
         cytosol = cell.compartments.get_one(id='c')
-        mean_volume = cell.properties.get_one(id='initial_volume').value
+        mean_volume = cell.properties.get_one(id='mean_volume').value
         mean_rna_copy_number     = options.get('mean_rna_copy_number')
         mean_protein_copy_number = options.get('mean_protein_copy_number')
 
