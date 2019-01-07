@@ -59,7 +59,7 @@ class KbIOTestCase(unittest.TestCase):
 
         """ Read back KBs from disk """
         env = EnvironmentVarGuard()
-        env.set('CONFIG__DOT__wc_lang__DOT__io__DOT__strict', '0')
+        env.set('CONFIG__DOT__wc_kb__DOT__io__DOT__strict', '0')
         with env:
             kb_reduced_read = wc_kb.io.Reader().run(core_path=os.path.join(self.dir, 'kb_reduced.xlsx'),
                                                     seq_path=os.path.join(self.dir, 'kb_reduced_seq.fna')
