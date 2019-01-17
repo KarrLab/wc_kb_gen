@@ -109,16 +109,17 @@ class ObservablesGenerator(wc_kb_gen.KbComponentGenerator):
         for aa in codons:
             rna = numpy.random.choice(trnas)
             trnas.remove(rna)
-            species_coefficient = rna.species.get_or_create(
-                compartment=cytosol).species_coefficients.get_or_create(coefficient=1)
+            species = rna.species.get_or_create(compartment=cytosol)
+            expression = wc_kb.core.ObservableExpression(
+                    expression=species.id(), species=[species])
 
             for i in range(len(codons[aa])):
                 codon = codons[aa][i]
                 rna_name = 'tRNA_'+codon
                 observable = cell.observables.get_or_create(id=rna_name+'_obs')
                 observable.name = rna_name
-                observable.species.append(species_coefficient)
-
+                observable.expression = expression
+                
         sampled_proteins = numpy.random.choice(
             prots, len(assigned_proteins), replace=False)
         assigned_proteins = iter(assigned_proteins)
@@ -126,13 +127,15 @@ class ObservablesGenerator(wc_kb_gen.KbComponentGenerator):
             protein_name = next(assigned_proteins)
             observable = cell.observables.get_or_create(id=protein_name+'_obs')
             observable.name = protein_name
-            observable.species.append(protein.species.get_or_create(
-                compartment=cytosol).species_coefficients.get_or_create(coefficient=1))
+            species = protein.species.get_or_create(compartment=cytosol)
+            observable.expression = wc_kb.core.ObservableExpression(
+                    expression=species.id(), species=[species])
 
         for comp in assigned_complexes:
             comp_species = cell.species_types.get_or_create(
                 id=comp, __type=wc_kb.core.ComplexSpeciesType)
             observable = cell.observables.get_or_create(id=comp+'_obs')
             observable.name = comp
-            observable.species.append(comp_species.species.get_one(
-                compartment=cytosol).species_coefficients.get_or_create(coefficient=1))
+            species = comp_species.species.get_one(compartment=cytosol)
+            observable.expression = wc_kb.core.ObservableExpression(
+                    expression=species.id(), species=[species])
