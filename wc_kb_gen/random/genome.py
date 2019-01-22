@@ -19,6 +19,7 @@ from Bio.Data import CodonTable
 from Bio.Seq import Seq, Alphabet
 from numpy import random
 from scipy import stats
+from wc_utils.util.units import unit_registry
 
 
 class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
@@ -448,12 +449,12 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         for rna in cell.species_types.get(__type=wc_kb.prokaryote_schema.RnaSpeciesType):
             rna_specie = rna.species.get_or_create(compartment=cytosol)
             conc = round(abs(random.normal(loc=mean_rna_copy_number,scale=15))) / scipy.constants.Avogadro / mean_volume
-            cell.concentrations.get_or_create(species=rna_specie, value=conc, units='M')
+            cell.concentrations.get_or_create(species=rna_specie, value=conc, units=unit_registry.parse_units('M'))
 
         for prot in cell.species_types.get(__type=wc_kb.prokaryote_schema.ProteinSpeciesType):
             prot_specie = prot.species.get_or_create(compartment=cytosol)
             conc = round(abs(random.normal(loc=mean_protein_copy_number,scale=15))) / scipy.constants.Avogadro / mean_volume
-            cell.concentrations.get_or_create(species=prot_specie, value=conc, units='M')
+            cell.concentrations.get_or_create(species=prot_specie, value=conc, units=unit_registry.parse_units('M'))
 
     def reduce_model(self):
         options = self.options

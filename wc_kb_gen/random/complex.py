@@ -6,14 +6,15 @@
 :License: MIT
 """
 
+from numpy import random
+from scipy import stats
+from wc_utils.util.units import unit_registry
+import math
+import numpy
+import scipy.constants
 import wc_kb
 import wc_kb_gen
-import random
-import numpy
-from numpy import random
-import math
-import scipy.stats as stats
-import scipy.constants
+
 
 class ComplexGenerator(wc_kb_gen.KbComponentGenerator):
     """
@@ -52,4 +53,4 @@ class ComplexGenerator(wc_kb_gen.KbComponentGenerator):
             cmplex_st.subunits.append(prot_coeff)
 
             conc = round(abs(random.normal(loc=mean_complex_copy_number,scale=15))) / scipy.constants.Avogadro / mean_volume
-            cell.concentrations.get_or_create(species=cmplex_specie, value=conc, units='M')
+            cell.concentrations.get_or_create(species=cmplex_specie, value=conc, units=unit_registry.parse_units('M'))
