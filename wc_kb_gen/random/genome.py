@@ -409,7 +409,8 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
                         for gene in tu.genes:
                             # creates ProteinSpecipe object for corresponding protein sequence(s)
                             prot = self.knowledge_base.cell.species_types.get_or_create(
-                                id='prot_{}'.format(gene.id), __type=wc_kb.prokaryote_schema.ProteinSpeciesType)
+                                id='prot_{}'.format(gene.id),
+                                __type=wc_kb.prokaryote_schema.ProteinSpeciesType)
                             prot.name = 'prot_{}'.format(gene.id)
 
                             prot.cell = cell
@@ -436,12 +437,12 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         for rna in cell.species_types.get(__type=wc_kb.prokaryote_schema.RnaSpeciesType):
             rna_specie = rna.species.get_or_create(compartment=cytosol)
             conc = round(abs(random.normal(loc=mean_rna_copy_number,scale=15))) / scipy.constants.Avogadro / mean_volume
-            cell.concentrations.get_or_create(species=rna_specie, value=conc, units=unit_registry.parse_units('M'))
+            cell.concentrations.get_or_create(id='CONC({})'.format(rna_specie.id), species=rna_specie, value=conc, units=unit_registry.parse_units('M'))
 
         for prot in cell.species_types.get(__type=wc_kb.prokaryote_schema.ProteinSpeciesType):
             prot_specie = prot.species.get_or_create(compartment=cytosol)
             conc = round(abs(random.normal(loc=mean_protein_copy_number,scale=15))) / scipy.constants.Avogadro / mean_volume
-            cell.concentrations.get_or_create(species=prot_specie, value=conc, units=unit_registry.parse_units('M'))
+            cell.concentrations.get_or_create(id='CONC({})'.format(prot_specie.id), species=prot_specie, value=conc, units=unit_registry.parse_units('M'))
 
     def reduce_model(self):
         options = self.options

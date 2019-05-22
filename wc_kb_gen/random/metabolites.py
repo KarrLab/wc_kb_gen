@@ -60,6 +60,7 @@ class MetabolitesGenerator(wc_kb_gen.KbComponentGenerator):
                             __type=wc_kb.core.Compartment, id='c', name='cytosol'))
 
             cell.concentrations.get_or_create(
+                id = 'CONC({})'.format(met_species.id),
                 species=met_species,
                 value=met['Intracellular concentration (M)'])
 
@@ -70,5 +71,6 @@ class MetabolitesGenerator(wc_kb_gen.KbComponentGenerator):
                             __type=wc_kb.core.Compartment, id='e'))
 
             cell.concentrations.get_or_create(
+                id = 'CONC({})'.format(met_species.id),
                 species=met_species,
                 value=met['Extracellular concentration (M)'])

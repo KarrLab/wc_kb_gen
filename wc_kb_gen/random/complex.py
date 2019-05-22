@@ -9,6 +9,7 @@
 from numpy import random
 from scipy import stats
 from wc_utils.util.units import unit_registry
+from wc_onto import onto as wcOntology
 import math
 import numpy
 import scipy.constants
@@ -51,11 +52,11 @@ class ComplexGenerator(wc_kb_gen.KbComponentGenerator):
         for complex_name in assigned_complexes:
             cmplex_st = cell.species_types.get_or_create(id=complex_name, __type=wc_kb.core.ComplexSpeciesType)
             cmplex_specie = cmplex_st.species.get_or_create(compartment=cytosol)
-            cmplex_st.formation_process = 7
+            cmplex_st.formation_process = wcOntology['WC:ribosomeAssembly']
 
             prot = cell.species_types.get(__type=wc_kb.prokaryote_schema.ProteinSpeciesType)[0]
             prot_coeff = prot.species_type_coefficients.get_or_create(coefficient=1)
             cmplex_st.subunits.append(prot_coeff)
 
             conc = round(abs(random.normal(loc=mean_complex_copy_number,scale=15))) / scipy.constants.Avogadro / mean_volume
-            cell.concentrations.get_or_create(species=cmplex_specie, value=conc, units=unit_registry.parse_units('M'))
+            cell.concentrations.get_or_create(id='CONC({})'.format(cmplex_specie.id), species=cmplex_specie, value=conc, units=unit_registry.parse_units('M'))
