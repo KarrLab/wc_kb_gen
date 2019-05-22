@@ -16,7 +16,7 @@ class TestKbGenerator(unittest.TestCase):
         gen = wc_kb_gen.KbGenerator()
 
         self.assertEqual(gen.component_generators, [])
-        self.assertEqual(gen.options, {'id': None, 'name': None, 'version': None})
+        self.assertEqual(gen.options, {'id': None, 'name': None, 'version': None, 'input_kb': None})
 
     def test_ModelGenerator_run(self):
         gen = wc_kb_gen.KbGenerator(options={
@@ -35,6 +35,20 @@ class TestKbGenerator(unittest.TestCase):
 
         self.assertEqual(kb.id, 'test_kb')
         self.assertEqual(kb.version, '0.0.1')
+
+        kb_input = wc_kb.core.KnowledgeBase(id='kb_input')
+        kb_input.cell = wc_kb.core.Cell(id='kb_input_cell')
+        gen = wc_kb_gen.KbGenerator(options={
+            'id': 'test_kb',
+            'version': '0.0.1',
+            'input_kb': kb_input,
+        })
+        kb = gen.run()
+
+        self.assertEqual(kb.id, 'kb_input')
+        self.assertEqual(kb.version, '')
+        self.assertEqual(kb.cell.id, 'kb_input_cell')
+        self.assertTrue(kb.is_equal(kb_input))
 
     def test_ModelGenerator_run_with_components(self):
         class TestComponentGenerator1(wc_kb_gen.KbComponentGenerator):
