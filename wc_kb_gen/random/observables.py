@@ -8,7 +8,8 @@
 import wc_kb
 import wc_kb_gen
 import numpy
-
+from wc_onto import onto as wcOntology
+from wc_utils.util.ontology import are_terms_equivalent
 
 class ObservablesGenerator(wc_kb_gen.KbComponentGenerator):
     """
@@ -73,7 +74,7 @@ class ObservablesGenerator(wc_kb_gen.KbComponentGenerator):
 
         trnas = []
         for rna in rnas:
-            if rna.type == wc_kb.RnaType.tRna:
+            if are_terms_equivalent(rna.type, wcOntology['WC:tRNA']):
                 trnas.append(rna)
 
         if genetic_code=='normal':
@@ -119,7 +120,7 @@ class ObservablesGenerator(wc_kb_gen.KbComponentGenerator):
                 observable = cell.observables.get_or_create(id=rna_name+'_obs')
                 observable.name = rna_name
                 observable.expression = expression
-                
+
         sampled_proteins = numpy.random.choice(
             prots, len(assigned_proteins), replace=False)
         assigned_proteins = iter(assigned_proteins)

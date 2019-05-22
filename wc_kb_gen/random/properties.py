@@ -45,14 +45,14 @@ class PropertiesGenerator(wc_kb_gen.KbComponentGenerator):
         # generate properties
         cell = self.knowledge_base.cell
 
-        prop = cell.properties.get_or_create(id='mean_volume')
+        prop = cell.parameters.get_or_create(id='mean_volume')
         prop.value = options.get('mean_volume')
         prop.units = unit_registry.parse_units('l')
 
-        prop = cell.properties.get_or_create(id='mean_doubling_time')
+        prop = cell.parameters.get_or_create(id='mean_doubling_time')
         prop.value = options.get('mean_doubling_time')
         prop.units = unit_registry.parse_units('s')
 
-        prop = cell.properties.get_or_create(id='cell_density')
+        prop = cell.parameters.get_or_create(id='cell_density')
         prop.value = options.get('mean_cell_density')
         prop.units = unit_registry.parse_units('cells l^-1')

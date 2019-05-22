@@ -20,6 +20,8 @@ from Bio.Seq import Seq, Alphabet
 from numpy import random
 from scipy import stats
 from wc_utils.util.units import unit_registry
+from wc_onto import onto as wcOntology
+from wc_utils.util.ontology import are_terms_equivalent
 
 
 class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
@@ -48,7 +50,7 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
     * mean_half_life (:obj:`float`): mean half-life of RNAs
     * genetic_code (:obj:`str`): 'normal' / 'reduced', if reduced only 'I': ['ATC'], 'L': ['CTG'],
         'M': ['ATG'], 'T': ['ACG'] codons in genome
-    * seq_path (:obj:`str`): path to save genome sequence    
+    * seq_path (:obj:`str`): path to save genome sequence
     """
 
     def clean_and_validate_options(self):
@@ -128,10 +130,14 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         assert(operon_gen_num >= 2)
         options['operon_gen_num'] = operon_gen_num
 
+        mean_rna_half_life = options.get('mean_rna_half_life', 8 * 60)
+        assert(mean_rna_half_life > 0)
+        options['mean_rna_half_life'] = mean_rna_half_life
+
         # DOI: 10.1073/pnas.0308747101
-        mean_half_life = options.get('mean_half_life', 2.1 * 60)
-        assert(mean_half_life > 0)
-        options['mean_half_life'] = mean_half_life
+        mean_protein_half_life = options.get('mean_protein_half_life', 750 * 60)
+        assert(mean_protein_half_life > 0)
+        options['mean_protein_half_life'] = mean_protein_half_life
 
         # DOI: 10.1038/ismej.2012.94
         mean_rna_copy_number = options.get('mean_rna_copy_number', 0.4)
@@ -143,7 +149,7 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
         assert(mean_protein_copy_number > 0)
         options['mean_protein_copy_number'] = mean_protein_copy_number
 
-        seq_path = options.get('seq_path')
+        seq_path = options.get('seq_path', 'rand_seq.fna')
         options['seq_path'] = seq_path
 
     def gen_components(self):
@@ -174,57 +180,42 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
 
         cell = self.knowledge_base.cell
         self.knowledge_base.translation_table = translation_table
-
         codon_table = CodonTable.unambiguous_dna_by_id[translation_table]
+
+        BASES = ['A', 'C', 'G', 'T']
+        PROB_BASES = [(1 - mean_gc_frac) / 2, mean_gc_frac /2, mean_gc_frac/2, (1-mean_gc_frac)/2]
 
         if genetic_code == 'normal':
             START_CODONS = codon_table.start_codons
+            STOP_CODONS = codon_table.stop_codons
 
         elif genetic_code == 'reduced':
-            START_CODONS = ['CTG']
+            START_CODONS = ['TTA']
+            STOP_CODONS = ['TAA']
 
-        # stop codons from NCBI list
-        STOP_CODONS = codon_table.stop_codons
-
-        BASES = ['A', 'C', 'G', 'T']  # The DNA Bases
-
-        # The probability of each base being selected randomly
-        PROB_BASES = [(1 - mean_gc_frac) / 2, mean_gc_frac /2, mean_gc_frac/2, (1-mean_gc_frac)/2]
-
-        # Draw the total number of genes
         num_genes_all = num_genes
-
-        assignList = []
-        for i in range(num_genes_all):
-            if i < num_tRNA:
-                assignList.append(wc_kb.core.GeneType.tRna)
-            elif i >= num_tRNA and i < num_tRNA + num_rRNA:
-                assignList.append(wc_kb.core.GeneType.rRna)
-            elif i >= num_rRNA + num_tRNA and i < num_ncRNA + num_tRNA + num_rRNA:
-                assignList.append(wc_kb.core.GeneType.sRna)
-            else:
-                assignList.append(wc_kb.core.GeneType.mRna)
+        assignList = num_tRNA*[wcOntology['WC:tRNA']] + \
+                     num_rRNA*[wcOntology['WC:rRNA']] + \
+                     num_ncRNA*[wcOntology['WC:ncRNA']] + \
+                     (num_genes_all-(num_ncRNA + num_tRNA + num_rRNA))*[wcOntology['WC:mRNA']]
 
         random.shuffle(assignList)
 
         # Create a chromosome n times
         dna_seqs = []
         for i_chr in range(num_chromosomes):
-            # number of genes in the chromosome
-            num_genes = math.ceil(num_genes_all / num_chromosomes)
 
-            # list of gene lengths (generated randomly) on chromosome
+            num_genes = math.ceil(num_genes_all / num_chromosomes)
             gene_lens = 3 * self.rand(mean_gene_len, count=num_genes, min=2)
             intergene_lens = 3 * self.rand(mean_gene_len / mean_coding_frac * (1 - mean_coding_frac), count=num_genes)
-
-            # sequence base triple length
             seq_len = numpy.sum(gene_lens) + numpy.sum(intergene_lens)
 
+            # Generate seq based on random codons (NOT start/stop codons)
             seq_str = []
-            # generates seq based on random codons (NOT start/stop codons)
+
             if genetic_code=='normal':
                 for i in range(0, seq_len, 3):
-                    codon_i = STOP_CODONS[0]
+                    codon_i = random.choice(STOP_CODONS)
                     codon_i = "".join(random.choice(BASES, p=PROB_BASES, size=(3,)))
                     seq_str.append(codon_i)
 
@@ -234,8 +225,9 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
                     codon_i = "".join(random.choice(['ATC', 'CTG', 'ATG', 'ACG']))
                     seq_str.append(codon_i)
 
+
             seq_str = "".join(seq_str)
-            seq = Seq(seq_str, Alphabet.DNAAlphabet())            
+            seq = Seq(seq_str, Alphabet.DNAAlphabet())
 
             chro = cell.species_types.get_or_create(id='chr_{}'.format(i_chr + 1), __type=wc_kb.core.DnaSpeciesType)
             chro.name = 'Chromosome {}'.format(i_chr + 1)
@@ -258,9 +250,9 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
                 if len(assignList) > 0:
                     gene.type = assignList.pop()
                 else:
-                    gene.type = wc_kb.core.GeneType.mRna
+                    gene.type = wcOntology['WC:mRNA']
 
-                if gene.type == wc_kb.core.GeneType.mRna:  # if mRNA, then set up start/stop codons in the gene
+                if gene.type == wcOntology['WC:mRNA']:  # if mRNA, then set up start/stop codons in the gene
 
                     start_codon = random.choice(START_CODONS)
                     stop_codon = random.choice(STOP_CODONS)
@@ -281,43 +273,35 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
 
                             seq_str = seq_str[:i]+codon_i+seq_str[i+3:]
 
-                                #while seq_str[i:i+3] in START_CODONS or seq_str[i:i+3] in STOP_CODONS:
-                                #    codon_i = "".join(random.choice(BASES, p=PROB_BASES, size=(3,)))
-                                #    seq_str = seq_str[:i]+codon_i+seq_str[i+3:]
-
                     seq = Seq(seq_str, Alphabet.DNAAlphabet())
 
-            dna_seqs.append(Bio.SeqRecord.SeqRecord(seq, chro.id))                                                
+            dna_seqs.append(Bio.SeqRecord.SeqRecord(seq, chro.id))
 
         with open(seq_path, 'w') as file:
             writer = Bio.SeqIO.FastaIO.FastaWriter(
                 file, wrap=70, record2title=lambda record: record.id)
-            writer.write_file(dna_seqs)        
+            writer.write_file(dna_seqs)
 
     def gen_tus(self):
-        """ Creates transcription units with 5'/3' UTRs, polycistronic mRNAs, and other types of RNA (tRNA, rRNA, sRNA)
+        """ Creates transcription units with 5'/3' UTRs, polycistronic mRNAs, and other types of RNA (tRNA, rRNA, sRNA) """
 
-        """
-
-        # validate these options in the options method
         options = self.options
-        # 7 bp default (E. coli, wikipedia)
-        five_prime_len = options.get('five_prime_len')
+        five_prime_len = options.get('five_prime_len') # 7 bp default (E. coli, wikipedia)
         three_prime_len = options.get('three_prime_len')  # 5 bp default guess
         operon_prop = options.get('operon_prop')  # 0.2 default guess
-        # 3 genes default (https://academic.oup.com/gbe/article/5/11/2242/653613)
-        operon_gen_num = options.get('operon_gen_num')
+        operon_gen_num = options.get('operon_gen_num') # 3 genes default (https://academic.oup.com/gbe/article/5/11/2242/653613)
 
         for i_chr, chromosome in enumerate(self.knowledge_base.cell.species_types.get(__type=wc_kb.core.DnaSpeciesType)):
             seq = chromosome.get_seq()
             i_gene = 0
             transcription_loci = []
+
             # Todo make this into a proper for loop that deals with repeats/additional loci
             while i_gene < len(chromosome.loci):
 
                 gene = chromosome.loci[i_gene]
 
-                if gene.type == wc_kb.core.GeneType.mRna:
+                if gene.type == wcOntology['WC:mRNA']:
                     # polycistronic mRNA (multiple GeneLocus objects per TranscriptionUnitLocus)
 
                     five_prime = self.rand(five_prime_len)[0]
@@ -345,7 +329,7 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
                             if i_gene >= len(chromosome.loci):
                                 break
 
-                            if (chromosome.loci[i_gene]).type == wc_kb.core.GeneType.mRna:
+                            if (chromosome.loci[i_gene]).type == wcOntology['WC:mRNA']:
                                 gene = chromosome.loci[i_gene]
                                 tu.genes.append(gene)
                             else:
@@ -390,15 +374,12 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
                 locus.polymer = chromosome
 
     def gen_rnas_proteins(self):
-        """ Creates RNA and protein objects corresponding to genes on chromosome
+        """ Creates RNA and protein objects corresponding to genes on chromosome. """
 
-        """
         cell = self.knowledge_base.cell
-
         options = self.options
-        mean_copy_number = options.get('mean_copy_number')
-        mean_half_life = options.get('mean_half_life')
-        mean_volume = self.knowledge_base.cell.properties.get_one(id='mean_volume').value
+        mean_rna_half_life = options.get('mean_rna_half_life')
+        mean_protein_half_life = options.get('mean_protein_half_life')
 
         for chromosome in self.knowledge_base.cell.species_types.get(__type=wc_kb.core.DnaSpeciesType):
             for i in range(len(chromosome.loci)):
@@ -412,19 +393,19 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
                     rna.name = 'rna {}'.format(tu.id)
 
                     # GeneLocus object for gene sequence, attribute of ProteinSpeciesType object
-                    if tu.genes[0].type == wc_kb.core.GeneType.mRna:
-                        rna.type = wc_kb.core.RnaType.mRna
-                    elif tu.genes[0].type == wc_kb.core.GeneType.rRna:
-                        rna.type = wc_kb.core.RnaType.rRna
-                    elif tu.genes[0].type == wc_kb.core.GeneType.tRna:
-                        rna.type = wc_kb.core.RnaType.tRna
-                    elif tu.genes[0].type == wc_kb.core.GeneType.sRna:
-                        rna.type = wc_kb.core.RnaType.sRna
+                    if are_terms_equivalent(tu.genes[0].type, wcOntology['WC:mRNA']):
+                        rna.type = wcOntology['WC:mRNA']
+                    elif are_terms_equivalent(tu.genes[0].type, wcOntology['WC:rRNA']):
+                        rna.type = wcOntology['WC:rRNA']
+                    elif are_terms_equivalent(tu.genes[0].type, wcOntology['WC:tRNA']):
+                        rna.type = wcOntology['WC:tRNA']
+                    elif are_terms_equivalent(tu.genes[0].type, wcOntology['WC:ncRNA']):
+                        rna.type = wcOntology['WC:ncRNA']
 
-                    rna.half_life = random.normal(mean_half_life, numpy.sqrt(mean_half_life))
+                    rna.half_life = random.normal(mean_rna_half_life, numpy.sqrt(mean_rna_half_life))
                     rna.transcription_units.append(tu)
 
-                    if rna.type == wc_kb.core.RnaType.mRna:
+                    if are_terms_equivalent(rna.type, wcOntology['WC:mRNA']):
                         for gene in tu.genes:
                             # creates ProteinSpecipe object for corresponding protein sequence(s)
                             prot = self.knowledge_base.cell.species_types.get_or_create(
@@ -433,18 +414,24 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
 
                             prot.cell = cell
                             prot.cell.knowledge_base = self.knowledge_base
-                            prot.gene = gene  # associates protein with GeneLocus object for corresponding gene
+                            prot.gene = gene
                             prot.rna = rna
-                            prot.half_life = 1
-                            #prot.concentration = wc_kb.Concentration(cell=cell, value=rna.concentration.value)
+                            prot.half_life = random.normal(mean_protein_half_life, numpy.sqrt(mean_protein_half_life))
 
     def gen_concentrations(self):
+        """ Creates the concentration objects of RNA and protein objects """
+
         options = self.options
         cell = self.knowledge_base.cell
         cytosol = cell.compartments.get_one(id='c')
-        mean_volume = cell.properties.get_one(id='mean_volume').value
         mean_rna_copy_number     = options.get('mean_rna_copy_number')
         mean_protein_copy_number = options.get('mean_protein_copy_number')
+
+        if self.knowledge_base.cell.parameters.get_one(id='mean_volume') is not None:
+            mean_volume = self.knowledge_base.cell.parameters.get_one(id='mean_volume').value
+        else:
+            mean_volume = 0.000000000000000067
+            print('"mean_volume" parameter is missing, using Mycoplasma pneumoniae value (6.7E-17L).')
 
         for rna in cell.species_types.get(__type=wc_kb.prokaryote_schema.RnaSpeciesType):
             rna_specie = rna.species.get_or_create(compartment=cytosol)
@@ -485,7 +472,7 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
             seq_str_new = ''.join(seq_list)
             seq=Seq(seq_str_new)
 
-            dna_seqs = [Bio.SeqRecord.SeqRecord(seq, dna.id)]                                              
+            dna_seqs = [Bio.SeqRecord.SeqRecord(seq, dna.id)]
 
             with open(seq_path, 'w') as file:
                 writer = Bio.SeqIO.FastaIO.FastaWriter(

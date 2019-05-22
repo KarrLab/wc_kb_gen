@@ -41,14 +41,19 @@ class ComplexGenerator(wc_kb_gen.KbComponentGenerator):
         cytosol = cell.compartments.get_one(id='c')
         assigned_complexes = self.options['assigned_complexes']
         mean_complex_copy_number = self.options['mean_complex_copy_number']
-        mean_volume = cell.properties.get_one(id='mean_volume').value
+
+        if self.knowledge_base.cell.parameters.get_one(id='mean_volume') is not None:
+            mean_volume = self.knowledge_base.cell.parameters.get_one(id='mean_volume').value
+        else:
+            mean_volume = 0.000000000000000067
+            print('"mean_volume" parameter is missing, using Mycoplasma pneumoniae value (6.7E-17L).')
 
         for complex_name in assigned_complexes:
             cmplex_st = cell.species_types.get_or_create(id=complex_name, __type=wc_kb.core.ComplexSpeciesType)
             cmplex_specie = cmplex_st.species.get_or_create(compartment=cytosol)
             cmplex_st.formation_process = 7
 
-            prot = cell.species_types.get(__type=wc_kb.prokaryote_schema.ProteinSpeciesType)[0]            
+            prot = cell.species_types.get(__type=wc_kb.prokaryote_schema.ProteinSpeciesType)[0]
             prot_coeff = prot.species_type_coefficients.get_or_create(coefficient=1)
             cmplex_st.subunits.append(prot_coeff)
 

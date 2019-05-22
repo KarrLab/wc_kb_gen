@@ -2,10 +2,12 @@
 
 :Author: Bilal Shaikh <bilal.shaikh@columbia.edu>
 :Author: Ashwin Srinivasan <ashwins@mit.edu>
+:Author: Balazs Szigeti <balazs.szigeti@mssm.edu>
 :Date: 2018-06-13
 :Copyright: 2018, Karr Lab
 :License: MIT
 """
+
 import math
 import os
 import shutil
@@ -14,40 +16,36 @@ import unittest
 import wc_kb
 import wc_kb_gen
 from Bio.Data import CodonTable
-
+from wc_onto import onto as wcOntology
+from wc_utils.util.ontology import are_terms_equivalent
 
 class TestGenomeGenerator(unittest.TestCase):
 
     def setUp(self):
-        
+
         self.dir = tempfile.mkdtemp()
-        
-        # The knowledge base that is needed for the KBComponentGenerator
-        # Creates the GenomeGenerator object and sets the parameters as given
-        self.whole_gen = wc_kb_gen.random.RandomKbGenerator(options={
-            'component': {
-                'PropertiesGenerator': {
-                    'mean_volume': 1e-15,
-                    'mean_doubling_time': 1000.,
-                },
-                'GenomeGenerator': {
-                    'num_genes': 200.,
-                    'seq_path': os.path.join(self.dir, 'kb_seq.fna'),
-                },
-            },
-        })
+        self.generator =  wc_kb_gen.random.RandomKbGenerator(
+                    component_generators=[wc_kb_gen.random.genome.GenomeGenerator],
+                    options = {'component': {
+                                    'PropertiesGenerator': {
+                                        'mean_volume': 1e-15,
+                                        'mean_doubling_time': 1000},
+                                   'GenomeGenerator': {
+                                        'num_genes': 200,
+                                        'num_chromosome': 1,
+                                        'mean_gene_len': 100,
+                                        'translation_table': 4,
+                                        'seq_path': os.path.join(self.dir, 'kb_seq.fna')}}})
 
-        self.kb = self.whole_gen.run()
-
-        component_options = self.whole_gen.options.get('component', {})
-
+        self.kb = self.generator.run()
+        component_options = self.generator.options.get('component', {})
         self.options = component_options.get('GenomeGenerator', {})
 
     def tearDown(self):
-        shutil.rmtree(self.dir)    
+        shutil.rmtree(self.dir)
 
     def test_init(self):
-        self.assertEqual(type(self.whole_gen),
+        self.assertEqual(type(self.generator),
                          wc_kb_gen.random.RandomKbGenerator)
 
     def test_num_chromosomes(self):
@@ -59,25 +57,20 @@ class TestGenomeGenerator(unittest.TestCase):
     def test_rna_props(self):
         rRna = 0
         tRna = 0
-        sRna = 0
-        rnas = self.kb.cell.species_types.get(
-            __type=wc_kb.prokaryote_schema.RnaSpeciesType)
+        ncRna = 0
+        rnas = self.kb.cell.species_types.get(__type=wc_kb.prokaryote_schema.RnaSpeciesType)
 
         for rna in rnas:
-            if rna.type == wc_kb.core.RnaType.rRna:
+            if are_terms_equivalent(rna.type, wcOntology['WC:rRNA']):
                 rRna += 1
-            elif rna.type == wc_kb.core.RnaType.tRna:
+            elif are_terms_equivalent(rna.type, wcOntology['WC:tRNA']):
                 tRna += 1
-            elif rna.type == wc_kb.core.RnaType.sRna:
-                sRna += 1
+            elif are_terms_equivalent(rna.type, wcOntology['WC:ncRNA']):
+                ncRna += 1
 
-        real_rRna = self.options.get('num_rRNA')
-        real_tRna = self.options.get('num_tRNA')
-        real_sRna = self.options.get('num_ncRNA')
-
-        self.assertEqual(rRna, real_rRna)
-        self.assertEqual(tRna, real_tRna)
-        self.assertEqual(sRna, real_sRna)
+        self.assertEqual(rRna, self.options.get('num_rRNA'))
+        self.assertEqual(tRna, self.options.get('num_tRNA'))
+        self.assertEqual(ncRna, self.options.get('num_ncRNA'))
 
     # test total number of RNAs (should match number of transcription units)
     # test total number of proteins (should match number of GeneLocus objects with mRNA)
@@ -95,7 +88,7 @@ class TestGenomeGenerator(unittest.TestCase):
             __type=wc_kb.prokaryote_schema.GeneLocus)
         geneCount = 0
         for gene in genes:
-            if gene.type == wc_kb.core.GeneType.mRna:
+            if are_terms_equivalent(gene.type, wcOntology['WC:mRNA']):
                 geneCount += 1
         self.assertEqual(geneCount, len(prots))
 
@@ -105,8 +98,7 @@ class TestGenomeGenerator(unittest.TestCase):
 
         genes = self.kb.cell.loci.get(__type=wc_kb.prokaryote_schema.GeneLocus)
         for gene in genes:
-            if gene.type == wc_kb.core.GeneType.mRna:
-
+            if are_terms_equivalent(gene.type, wcOntology['WC:mRNA']):
                 self.assertIn(gene.get_seq()[0:3], START_CODONS)
 
     def test_stop_codon(self):
@@ -114,12 +106,8 @@ class TestGenomeGenerator(unittest.TestCase):
         genes = self.kb.cell.loci.get(__type=wc_kb.prokaryote_schema.GeneLocus)
         STOP_CODONS = CodonTable.unambiguous_dna_by_id[trans_table].stop_codons
         for gene in genes:
-            if gene.type == wc_kb.core.GeneType.mRna:
+            if are_terms_equivalent(gene.type, wcOntology['WC:mRNA']):
                 self.assertIn(gene.get_seq()[-3:], STOP_CODONS)
-
-    # tests first and last sites of proteins
-    def test_prot_sites(self):
-        pass
 
     def test_length(self):
         # Tests that the average length of the genes is within 3 standard deviations of the expected.
@@ -143,7 +131,7 @@ class TestGenomeGenerator(unittest.TestCase):
         sum_three_prime = 0
         mRnaCount = 0
         for tu in tus:
-            if tu.genes[0].type == wc_kb.core.GeneType.mRna:  # checks if it is mRna
+            if are_terms_equivalent(tu.genes[0].type, wcOntology['WC:mRNA']):
                 mRnaCount += 1
                 five_prime_gene = tu.genes[0]
                 three_prime_gene = tu.genes[len(tu.genes)-1]
@@ -175,28 +163,17 @@ class TestGenomeGenerator(unittest.TestCase):
         geneCount = 0
 
         for gene in genes:
-            if gene.type == wc_kb.core.GeneType.mRna:
+            if are_terms_equivalent(gene.type, wcOntology['WC:mRNA']):
                 geneCount += 1
 
         avg_in_operon = gene_sum / geneCount
         operon_prop = self.options.get('operon_prop')
 
-        self.assertAlmostEqual(avg_in_operon, operon_prop,
-
-                               delta=3 * math.sqrt(operon_prop))
-        self.assertAlmostEqual(
-            avg_operon_gen, operon_gen_num, delta=3 * math.sqrt(operon_gen_num))
+        self.assertAlmostEqual(avg_in_operon, operon_prop, delta=3 * math.sqrt(operon_prop))
+        self.assertAlmostEqual(avg_operon_gen, operon_gen_num, delta=3 * math.sqrt(operon_gen_num))
 
     def test_protein_start_codon(self):
         proteins = self.kb.cell.species_types.get(__type=wc_kb.prokaryote_schema.ProteinSpeciesType)
         for protein in proteins:
             seq = str(protein.get_seq())
             self.assertEqual(seq[0], 'M')
-
-    '''def test_assignment(self):
-        rna = self.kb.cell.species_types.get(name='tRNA_Ser')
-        rna = rna[0]
-        assert (rna.type == wc_kb.core.RnaType.tRna)
-
-        protein = self.kb.cell.species_types.get(id="IF")
-        assert(type(protein[0]) == wc_kb.prokaryote_schema.ProteinSpeciesType)'''
