@@ -76,11 +76,15 @@ class KbGenerator(object):
         Returns:
             :obj:`wc_kb.core.KnowledgeBase`: knowledge base
         """
-        kb = wc_kb.core.KnowledgeBase()
-        kb.id = self.options.get('id')
-        kb.name = self.options.get('name')
-        kb.version = self.options.get('version')
-        kb.cell = wc_kb.core.Cell(id='cell')
+        kb_option = self.options.get('input_kb')
+        if kb_option:
+            kb = kb_option
+        else:
+            kb = wc_kb.core.KnowledgeBase()
+            kb.id = self.options.get('id')
+            kb.name = self.options.get('name')
+            kb.version = self.options.get('version')
+            kb.cell = wc_kb.core.Cell(id='cell')
 
         component_options = self.options.get('component', {})
         for component_generator in self.component_generators:
