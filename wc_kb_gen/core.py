@@ -15,9 +15,14 @@ class KbGenerator(object):
 
     Options:
 
-    * id
-    * name
-    * component
+    * id (:obj:`str`): id
+    * name (:obj:`str`): name
+    * version (:obj:`str`): version
+    * input_kb (:obj:`wc_kb.core.KnowledgeBase`, optional): knowledge base input if 
+        one wants to build upon an existing knowledge base 
+    * component (:obj:`dict`): dictionary of options whose keys are the names
+        of component generator classes and whose values are dictionaries of options
+        for the component generator classes
 
     Attributes:
         component_generators (:obj:`list` of :obj:`KbComponentGenerator`): component
@@ -61,18 +66,26 @@ class KbGenerator(object):
         assert(isinstance(version, str) or version is None)
         options['version'] = version
 
+        input_kb = options.get('input_kb', None)
+        assert(isinstance(input_kb, wc_kb.core.KnowledgeBase) or input_kb is None)
+        options['input_kb'] = input_kb
+
     def run(self):
         """ Generate a knowledge base of experimental data for a whole-cell model
 
         Returns:
             :obj:`wc_kb.core.KnowledgeBase`: knowledge base
         """
-        kb = wc_kb.core.KnowledgeBase()
-        kb.id = self.options.get('id')
-        kb.name = self.options.get('name')
-        kb.version = self.options.get('version')
 
-        kb.cell = wc_kb.core.Cell(id='cell')
+        kb_option = self.options.get('input_kb')
+        if kb_option:
+            kb = kb_option
+        else:    
+            kb = wc_kb.core.KnowledgeBase()
+            kb.id = self.options.get('id')
+            kb.name = self.options.get('name')
+            kb.version = self.options.get('version')
+            kb.cell = wc_kb.core.Cell(id='cell')
 
         component_options = self.options.get('component', {})
         for component_generator in self.component_generators:
