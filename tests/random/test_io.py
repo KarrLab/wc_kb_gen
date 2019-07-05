@@ -46,11 +46,11 @@ class KbIOTestCase(unittest.TestCase):
         """ Write KBs to disk """
         wc_kb.io.Writer().run(os.path.join(self.dir, 'kb_reduced.xlsx'),
                               kb_reduced,
-                              set_repo_metadata_from_path=False)
+                              data_repo_metadata=False)
 
         wc_kb.io.Writer().run(os.path.join(self.dir, 'kb.xlsx'),
                               kb,
-                              set_repo_metadata_from_path=False)
+                              data_repo_metadata=False)
 
         self.assertTrue(os.path.isfile(os.path.join(self.dir, 'kb_reduced.xlsx')))
         self.assertTrue(os.path.isfile(os.path.join(self.dir, 'kb_reduced_seq.fna')))
