@@ -54,7 +54,7 @@ class ComplexGenerator(wc_kb_gen.KbComponentGenerator):
             cmplex_specie = cmplex_st.species.get_or_create(compartment=cytosol)
             cmplex_st.formation_process = wcOntology['WC:ribosomeAssembly']
 
-            prot = cell.species_types.get(__type=wc_kb.prokaryote_schema.ProteinSpeciesType)[0]
+            prot = cell.species_types.get(__type=wc_kb.prokaryote.ProteinSpeciesType)[0]
             prot_coeff = prot.species_type_coefficients.get_or_create(coefficient=1)
             cmplex_st.subunits.append(prot_coeff)
 

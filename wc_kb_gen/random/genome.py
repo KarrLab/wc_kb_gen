@@ -241,7 +241,7 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
             # creates GeneLocus objects for the genes and labels their GeneType (which type of RNA they transcribe)
             for i_gene, gene_start in enumerate(gene_starts):
                 gene = self.knowledge_base.cell.loci.get_or_create(
-                    id='gene_{}_{}'.format(i_chr + 1, i_gene + 1), __type=wc_kb.prokaryote_schema.GeneLocus)
+                    id='gene_{}_{}'.format(i_chr + 1, i_gene + 1), __type=wc_kb.prokaryote.GeneLocus)
                 gene.start = gene_start + 1  # 1-indexed
                 gene.polymer = chro
                 gene.end = gene.start + gene_lens[i_gene] - 1  # 1-indexed
@@ -314,7 +314,7 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
 
                         # add 3', 5' UTRs to the ends of the transcription unit (upstream of first gene, downstream of last gene)
                         tu = self.knowledge_base.cell.loci.get_or_create(
-                            id='tu_{}_{}'.format(i_chr + 1, i_gene + 1), __type=wc_kb.prokaryote_schema.TranscriptionUnitLocus)
+                            id='tu_{}_{}'.format(i_chr + 1, i_gene + 1), __type=wc_kb.prokaryote.TranscriptionUnitLocus)
                         tu.name = 'tu {} {}'.format(i_chr+1, i_gene+1)
 
                         five_prime_start = gene.start - five_prime
@@ -351,7 +351,7 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
                             three_prime_end = len(seq) - 1
 
                         tu = self.knowledge_base.cell.loci.get_or_create(
-                            id='tu_{}_{}'.format(i_chr + 1, i_gene + 1), __type=wc_kb.prokaryote_schema.TranscriptionUnitLocus)
+                            id='tu_{}_{}'.format(i_chr + 1, i_gene + 1), __type=wc_kb.prokaryote.TranscriptionUnitLocus)
                         tu.start = five_prime_start
                         tu.end = three_prime_end
                         tu.name = 'tu {} {}'.format(i_chr+1, i_gene+1)
@@ -362,7 +362,7 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
                 # make a transcription unit that transcribes other types of RNA (tRNA, rRNA, sRNA)
                 else:
                     tu = self.knowledge_base.cell.loci.get_or_create(
-                        id='tu_{}_{}'.format(i_chr + 1, i_gene + 1), __type=wc_kb.prokaryote_schema.TranscriptionUnitLocus)
+                        id='tu_{}_{}'.format(i_chr + 1, i_gene + 1), __type=wc_kb.prokaryote.TranscriptionUnitLocus)
                     tu.name = 'tu {} {}'.format(i_chr+1, i_gene+1)
                     tu.start = gene.start
                     tu.end = gene.end
@@ -385,11 +385,11 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
             for i in range(len(chromosome.loci)):
                 locus = chromosome.loci[i]
 
-                if type(locus) == wc_kb.prokaryote_schema.TranscriptionUnitLocus:
+                if type(locus) == wc_kb.prokaryote.TranscriptionUnitLocus:
                     tu = locus
 
                     # creates RnaSpeciesType for RNA sequence corresponding to gene
-                    rna = self.knowledge_base.cell.species_types.get_or_create(id='rna_{}'.format(tu.id), __type=wc_kb.prokaryote_schema.RnaSpeciesType)
+                    rna = self.knowledge_base.cell.species_types.get_or_create(id='rna_{}'.format(tu.id), __type=wc_kb.prokaryote.RnaSpeciesType)
                     rna.name = 'rna {}'.format(tu.id)
 
                     # GeneLocus object for gene sequence, attribute of ProteinSpeciesType object
@@ -410,7 +410,7 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
                             # creates ProteinSpecipe object for corresponding protein sequence(s)
                             prot = self.knowledge_base.cell.species_types.get_or_create(
                                 id='prot_{}'.format(gene.id),
-                                __type=wc_kb.prokaryote_schema.ProteinSpeciesType)
+                                __type=wc_kb.prokaryote.ProteinSpeciesType)
                             prot.name = 'prot_{}'.format(gene.id)
 
                             prot.cell = cell
@@ -434,12 +434,12 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
             mean_volume = 0.000000000000000067
             print('"mean_volume" parameter is missing, using Mycoplasma pneumoniae value (6.7E-17L).')
 
-        for rna in cell.species_types.get(__type=wc_kb.prokaryote_schema.RnaSpeciesType):
+        for rna in cell.species_types.get(__type=wc_kb.prokaryote.RnaSpeciesType):
             rna_specie = rna.species.get_or_create(compartment=cytosol)
             conc = round(abs(random.normal(loc=mean_rna_copy_number,scale=15))) / scipy.constants.Avogadro / mean_volume
             cell.concentrations.get_or_create(id='CONC({})'.format(rna_specie.id), species=rna_specie, value=conc, units=unit_registry.parse_units('M'))
 
-        for prot in cell.species_types.get(__type=wc_kb.prokaryote_schema.ProteinSpeciesType):
+        for prot in cell.species_types.get(__type=wc_kb.prokaryote.ProteinSpeciesType):
             prot_specie = prot.species.get_or_create(compartment=cytosol)
             conc = round(abs(random.normal(loc=mean_protein_copy_number,scale=15))) / scipy.constants.Avogadro / mean_volume
             cell.concentrations.get_or_create(id='CONC({})'.format(prot_specie.id), species=prot_specie, value=conc, units=unit_registry.parse_units('M'))
@@ -463,7 +463,7 @@ class GenomeGenerator(wc_kb_gen.KbComponentGenerator):
             seq_str  = str(dna.get_seq())
             seq_list = list(seq_str)
 
-            for prot in kb.cell.species_types.get(__type = wc_kb.prokaryote_schema.ProteinSpeciesType):
+            for prot in kb.cell.species_types.get(__type = wc_kb.prokaryote.ProteinSpeciesType):
                 for base_num in range(prot.gene.start+2,prot.gene.end-3,3):
                     new_codon = random.choice(['ATC', 'CTG', 'ATG', 'ACG'])
                     seq_list[base_num]=new_codon[0]

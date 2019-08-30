@@ -58,7 +58,7 @@ class TestGenomeGenerator(unittest.TestCase):
         rRna = 0
         tRna = 0
         ncRna = 0
-        rnas = self.kb.cell.species_types.get(__type=wc_kb.prokaryote_schema.RnaSpeciesType)
+        rnas = self.kb.cell.species_types.get(__type=wc_kb.prokaryote.RnaSpeciesType)
 
         for rna in rnas:
             if are_terms_equivalent(rna.type, wcOntology['WC:rRNA']):
@@ -76,16 +76,16 @@ class TestGenomeGenerator(unittest.TestCase):
     # test total number of proteins (should match number of GeneLocus objects with mRNA)
     def test_rna_num(self):
         rnas = self.kb.cell.species_types.get(
-            __type=wc_kb.prokaryote_schema.RnaSpeciesType)
+            __type=wc_kb.prokaryote.RnaSpeciesType)
         tus = self.kb.cell.loci.get(
-            __type=wc_kb.prokaryote_schema.TranscriptionUnitLocus)
+            __type=wc_kb.prokaryote.TranscriptionUnitLocus)
         self.assertEqual(len(rnas), len(tus))
 
     def test_prot_num(self):
         prots = self.kb.cell.species_types.get(
-            __type=wc_kb.prokaryote_schema.ProteinSpeciesType)
+            __type=wc_kb.prokaryote.ProteinSpeciesType)
         genes = self.kb.cell.loci.get(
-            __type=wc_kb.prokaryote_schema.GeneLocus)
+            __type=wc_kb.prokaryote.GeneLocus)
         geneCount = 0
         for gene in genes:
             if are_terms_equivalent(gene.type, wcOntology['WC:mRNA']):
@@ -96,14 +96,14 @@ class TestGenomeGenerator(unittest.TestCase):
         trans_table = self.kb.translation_table
         START_CODONS = CodonTable.unambiguous_dna_by_id[trans_table].start_codons
 
-        genes = self.kb.cell.loci.get(__type=wc_kb.prokaryote_schema.GeneLocus)
+        genes = self.kb.cell.loci.get(__type=wc_kb.prokaryote.GeneLocus)
         for gene in genes:
             if are_terms_equivalent(gene.type, wcOntology['WC:mRNA']):
                 self.assertIn(gene.get_seq()[0:3], START_CODONS)
 
     def test_stop_codon(self):
         trans_table = self.kb.translation_table
-        genes = self.kb.cell.loci.get(__type=wc_kb.prokaryote_schema.GeneLocus)
+        genes = self.kb.cell.loci.get(__type=wc_kb.prokaryote.GeneLocus)
         STOP_CODONS = CodonTable.unambiguous_dna_by_id[trans_table].stop_codons
         for gene in genes:
             if are_terms_equivalent(gene.type, wcOntology['WC:mRNA']):
@@ -112,7 +112,7 @@ class TestGenomeGenerator(unittest.TestCase):
     def test_length(self):
         # Tests that the average length of the genes is within 3 standard deviations of the expected.
 
-        genes = self.kb.cell.loci.get(__type=wc_kb.prokaryote_schema.GeneLocus)
+        genes = self.kb.cell.loci.get(__type=wc_kb.prokaryote.GeneLocus)
 
         sum_len = 0
         for gene in genes:
@@ -126,7 +126,7 @@ class TestGenomeGenerator(unittest.TestCase):
         # checks average lengths of 5'/3' UTRs on transcription units with mRna
     def test_utrs(self):
         tus = self.kb.cell.loci.get(
-            __type=wc_kb.prokaryote_schema.TranscriptionUnitLocus)
+            __type=wc_kb.prokaryote.TranscriptionUnitLocus)
         sum_five_prime = 0
         sum_three_prime = 0
         mRnaCount = 0
@@ -152,7 +152,7 @@ class TestGenomeGenerator(unittest.TestCase):
 
     def test_operons(self):
         tus = self.kb.cell.loci.get(
-            __type=wc_kb.prokaryote_schema.TranscriptionUnitLocus)
+            __type=wc_kb.prokaryote.TranscriptionUnitLocus)
         gene_sum = 0
         operonCount = 0
         for tu in tus:
@@ -163,7 +163,7 @@ class TestGenomeGenerator(unittest.TestCase):
         avg_operon_gen = gene_sum / operonCount
         operon_gen_num = self.options.get('operon_gen_num')
 
-        genes = self.kb.cell.loci.get(__type=wc_kb.prokaryote_schema.GeneLocus)
+        genes = self.kb.cell.loci.get(__type=wc_kb.prokaryote.GeneLocus)
         geneCount = 0
 
         for gene in genes:
@@ -177,7 +177,7 @@ class TestGenomeGenerator(unittest.TestCase):
         self.assertAlmostEqual(avg_operon_gen, operon_gen_num, delta=3 * math.sqrt(operon_gen_num))
 
     def test_protein_start_codon(self):
-        proteins = self.kb.cell.species_types.get(__type=wc_kb.prokaryote_schema.ProteinSpeciesType)
+        proteins = self.kb.cell.species_types.get(__type=wc_kb.prokaryote.ProteinSpeciesType)
         for protein in proteins:
             seq = str(protein.get_seq())
             self.assertEqual(seq[0], 'M')
