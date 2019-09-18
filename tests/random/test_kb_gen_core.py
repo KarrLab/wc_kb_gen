@@ -7,7 +7,7 @@
 """
 
 from wc_kb_gen import random
-import obj_model
+import obj_tables
 import os
 import shutil
 import tempfile
@@ -38,7 +38,7 @@ class KbGeneratorTestCase(unittest.TestCase):
         self.assertEqual(len(kb.cell.species_types.get(
             __type=wc_kb.core.DnaSpeciesType)), 10)
 
-        errors = obj_model.Validator().run(kb, get_related=True)
+        errors = obj_tables.Validator().run(kb, get_related=True)
         self.assertEqual(
             errors, None, msg=wc_utils.util.string.indent_forest(errors))
 
