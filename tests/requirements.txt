@@ -1,1 +1,2 @@
+numpy
 wc_model_gen

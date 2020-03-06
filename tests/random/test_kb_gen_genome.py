@@ -9,6 +9,7 @@
 """
 
 import math
+import numpy.testing
 import os
 import shutil
 import tempfile
@@ -141,7 +142,7 @@ class TestGenomeGenerator(unittest.TestCase):
         five_prime_len = self.options.get('five_prime_len')
         three_prime_len = self.options.get('three_prime_len')
 
-        self.assertAlmostEqual(sum_five_prime/mRnaCount, five_prime_len, 0)
+        numpy.testing.assert_allclose(sum_five_prime / mRnaCount, five_prime_len, rtol=2e-2)
 
         # TODO:  talk to Ashwin about 3' UTRs
         #self.assertAlmostEqual(sum_three_prime/mRnaCount, three_prime_len, 1)
