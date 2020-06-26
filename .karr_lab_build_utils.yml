@@ -1,7 +1,10 @@
 downstream_dependencies:
   - h1_hesc
   - wc_model_gen
-
 email_notifications:
   - jonrkarr@gmail.com
   - bilal.shaikh@columbia.edu
+static_analyses:
+  ignore_unused_requirements: []
+  ignore_missing_requirements:
+    - configobj

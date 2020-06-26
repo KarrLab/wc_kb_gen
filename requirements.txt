@@ -1,2 +1,5 @@
+biopython
+numpy
+scipy
 setuptools
 wc_kb
