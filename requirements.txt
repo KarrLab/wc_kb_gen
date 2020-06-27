@@ -3,3 +3,5 @@ numpy
 scipy
 setuptools
 wc_kb
+wc_onto
+wc_utils
